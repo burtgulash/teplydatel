@@ -6,16 +6,17 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
+        <script src="logic.js"></script>
+
         <style>
             main {
                 max-width: 960px;
                 margin: 0 auto;
             }
 
-            #tuto_pis {
-                text-decoration: underline;
+            #tuto-pis {
                 color: green;
-                    font-weight: bold;
+                text-decoration: underline;
             }
         </style>
     </head>
@@ -24,14 +25,14 @@
             <h1>Teplý Datel</h1>
         </header>
         <main>
-            <div id="psaci_text">
-                <span id="tos_napsals">Tos napsals.</span>
+            <div id="psaci-text">
+                <span id="tos-napsals"></span>
                 <span class="mezera"> </span>
-                <span id="tuto_pis">Tuto piš.</span>
+                <span id="tuto-pis"></span>
                 <span class="mezera"> </span>
-                <span id="tuto_napises">Tuto napíšeš.</span>
+                <span id="tuto-napises">Tak tuto je ten jeden text co teď budeš psáti hezky česky.</span>
             </div>
-            <input type="text" class="vstup" autocorrect="off" autocapitalize="off" />
+            <input type="text" id="sem-pis" autocorrect="off" autocapitalize="off" />
         </main>
     </body>
 </html>
