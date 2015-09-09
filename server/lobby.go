@@ -25,7 +25,10 @@ func NewLobby() *Lobby {
 }
 
 func (l *Lobby) run() {
+<<<<<<< HEAD
 	log.Println("Lobby running")
+=======
+>>>>>>> 8c0693e4dd1e1196f3cc466ea374f6154aa9e9b9
 	for {
 		select {
 		case race_request := <-l.register_race:
