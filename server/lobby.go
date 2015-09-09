@@ -1,54 +1,66 @@
 package main
 
+import (
+	"github.com/gorilla/websocket"
+	"log"
+	"net/http"
+)
+
 type Lobby struct {
 	players map[*Player]bool
-	races   map[string]*Race
+	races   map[Race_code]*Race
 
-	register_race   chan *Race
+	register_race   chan chan *Race
 	unregister_race chan *Race
 }
 
 func NewLobby() *Lobby {
 	return &Lobby{
 		players: make(map[*Player]bool),
-		races:   make(map[string]*Race),
+		races:   make(map[Race_code]*Race),
 
 		register_race:   make(chan chan *Race),
 		unregister_race: make(chan *Race),
 	}
 }
 
-func (l *lobby) run() {
+func (l *Lobby) run() {
+	log.Println("Lobby running")
 	for {
 		select {
 		case race_request := <-l.register_race:
 			race := l.make_race()
-			l.races[race_code] = race
+			l.races[race.race_code] = race
 
 			// Run the race!
 			go race.run()
+			log.Println("Created race", race.race_code)
 
 			// Send the newly created race back to requester
 			race_request <- race
 			close(race_request)
 		case race := <-l.unregister_race:
-			if _, in := l.races[race_code]; in {
-				delete(l.races, race_code)
+			if _, in := l.races[race.race_code]; in {
+				delete(l.races, race.race_code)
 			} else {
-				log.Println("ERROR", "can't unregister non-existing race", race_code)
+				log.Println("ERROR", "can't unregister non-existing race", race.race_code)
 			}
 		}
 	}
 }
 
-func (l *lobby) make_race() *Race {
+func (l *Lobby) make_race() *Race {
 	// TODO create race_code here
-	race_code := "xxxxxxx"
-	return NewRace(race_code)
+	var race_code Race_code
+	copy(race_code[:], "xxxxxxx")
+	return NewRace(l, race_code)
 }
 
-func (l *lobby) ws_handler(w http.ResponseWriter, r *http.Request) {
-	race_code := r.URL.Query().Get(":race_code")
+func (l *Lobby) ws_handler(w http.ResponseWriter, r *http.Request) {
+	race_code_arg := r.URL.Query().Get(":race_code")
+
+	var race_code Race_code
+	copy(race_code[:], race_code_arg)
 	race, in := l.races[race_code]
 	if !in {
 		http.Error(w, "Race does not exist", 404)
@@ -66,16 +78,20 @@ func (l *lobby) ws_handler(w http.ResponseWriter, r *http.Request) {
 		WriteBufferSize: 1024,
 	}
 
-	if ws, err := upgrader.Upgrade(w, r, nil); err != nil {
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
 		log.Println(err)
 		return
 	}
 
 	player.conn = &connection{
-		send: make(chan []byte, 256),
-		ws:   ws,
-		race: race,
+		send:   make(chan []byte, 256),
+		ws:     ws,
+		player: player,
+		race:   race,
 	}
 
 	race.register <- player
+	go player.conn.ws_reader()
+	player.conn.ws_writer()
 }

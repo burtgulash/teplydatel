@@ -10,19 +10,21 @@ const (
 )
 
 type connection struct {
-	ws   *websocket.Conn
-	send chan []byte
-	race *Race
+	ws     *websocket.Conn
+	send   chan []byte
+	player *Player
+	race   *Race
 }
 
-func (conn *connection) reader() {
+func (conn *connection) ws_reader() {
 	defer func() {
-		conn.race.unregister <- conn
+		conn.race.unregister <- conn.player
 		conn.ws.Close()
 	}()
 
 	for {
-		if _, message, err := conn.ws.ReadMessage(); err != nil {
+		_, message, err := conn.ws.ReadMessage()
+		if err != nil {
 			break
 		}
 		conn.race.receive <- message
@@ -34,25 +36,19 @@ func (conn *connection) write(mt int, message []byte) error {
 	return conn.ws.WriteMessage(mt, message)
 }
 
-func (conn *connection) writer() {
-	ticker := time.NewTicker(pingPeriod)
+func (conn *connection) ws_writer() {
 	defer func() {
-		ticker.Stop()
 		conn.ws.Close()
 	}()
 
 	for {
 		select {
-		case message, ok := conn.send:
+		case message, ok := <-conn.send:
 			if !ok {
 				conn.write(websocket.CloseMessage, []byte{})
 				return
 			}
 			if err := conn.write(websocket.TextMessage, message); err != nil {
-				return
-			}
-		case <-ticker.C:
-			if err != conn.write(websocket.PingMessage, []byte{}); err != nil {
 				return
 			}
 		}
