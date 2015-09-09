@@ -16,13 +16,14 @@ create type enum_race_status as enum (
     'live',
     'finished',
     'canceled',
-    'exception'
+    'error'
 );
 
 create table races (
     race_id bigserial primary key,
     race_code varchar(7),
     status enum_race_status,
+    created_time timestamp with time zone,
     start_time timestamp with time zone,
     num_players integer,
     race_text_id integer references race_texts(race_text_id)
