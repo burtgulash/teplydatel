@@ -4,13 +4,16 @@ import (
 	"time"
 )
 
+type Race_code [7]byte
+
 type Race struct {
 	race_id      int64
-	race_code    [7]byte
+	race_code    Race_code
 	status       string
 	created_time time.Time
 	start_time   time.Time
 	race_text    string
+	lobby        *Lobby
 
 	players    map[*Player]bool
 	receive    chan []byte
@@ -18,8 +21,9 @@ type Race struct {
 	unregister chan *Player
 }
 
-func NewRace(race_code string) *Race {
+func NewRace(lobby *Lobby, race_code Race_code) *Race {
 	return &Race{
+		lobby:      lobby,
 		race_code:  race_code,
 		players:    make(map[*Player]bool),
 		receive:    make(chan []byte),
@@ -29,10 +33,21 @@ func NewRace(race_code string) *Race {
 }
 
 func (r *Race) run() {
+	timer := time.NewTimer(10 * time.Minute)
+	defer func() {
+		timer.Stop()
+		r.lobby.unregister_race <- r
+	}()
+
 	for {
 		select {
+		case <-timer.C:
+			break
 		case player := <-r.register:
 			r.players[player] = true
+
+			// TODO after countdouwn is initiated, reset the timer
+			// timer.Reset(5 * time.Minute)
 		case player := <-r.unregister:
 			if _, ok := r.players[player]; ok {
 				delete(r.players, player)

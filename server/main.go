@@ -1,18 +1,23 @@
 package main
 
 import (
-	"github.com/bmizerany/pat"
+	"flag"
+	"github.com/drone/routes"
 	"log"
 	"net/http"
 )
 
+var addr = flag.String("addr", ":1338", "http server address")
+
 func main() {
+	flag.Parse()
 	lobby := NewLobby()
 	go lobby.run()
 
-	mux := pat.New()
-	mux.Post("/ws", lobby.ws_handler)
+	mux := routes.New()
+	mux.Post("/ws/:race_code([a-z0-9]{7})", lobby.ws_handler)
 
+	log.Println("Serving on", *addr)
 	if err := http.ListenAndServe(*addr, nil); err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
