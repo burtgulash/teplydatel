@@ -46,10 +46,7 @@ func (r *Race) run() {
 			break
 		case player := <-r.register:
 			r.players[player] = true
-<<<<<<< HEAD
 			log.Println("Player", player.name, "joined race", r.race_code)
-=======
->>>>>>> 8c0693e4dd1e1196f3cc466ea374f6154aa9e9b9
 
 			// TODO after countdouwn is initiated, reset the timer
 			// timer.Reset(5 * time.Minute)

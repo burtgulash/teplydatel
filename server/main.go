@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/drone/routes"
 	"log"
 	"net/http"
@@ -15,7 +16,12 @@ func main() {
 	go lobby.run()
 
 	mux := routes.New()
-	mux.Post("/ws/:race_code([a-z0-9]{7})", lobby.ws_handler)
+	mux.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "hello wordl!")
+	})
+	mux.Post("/ws/:race_code", lobby.ws_handler)
+
+	http.Handle("/", mux)
 
 	log.Println("Serving on", *addr)
 	if err := http.ListenAndServe(*addr, nil); err != nil {
