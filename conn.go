@@ -17,7 +17,7 @@ type connection struct {
 	alive   bool
 }
 
-func NewConnection(ws *websocket.Conn, receive chan<- []byte) *connection {
+func NewConnection(ws *websocket.Conn, receive chan []byte) *connection {
 	return &connection{
 		// 8 is size of buffer - # of messages before it gets full
 		send:    make(chan []byte, 8),
@@ -33,7 +33,7 @@ func (conn *connection) run() {
 }
 
 func (conn *connection) close() {
-	alive = false
+	conn.alive = false
 	close(conn.send)
 }
 
@@ -42,7 +42,7 @@ func (conn *connection) ws_reader() {
 		conn.ws.Close()
 	}()
 
-	for alive {
+	for conn.alive {
 		_, message, err := conn.ws.ReadMessage()
 		if err != nil {
 			break
@@ -61,7 +61,7 @@ func (conn *connection) ws_writer() {
 		conn.ws.Close()
 	}()
 
-	for alive {
+	for conn.alive {
 		message, ok := <-conn.send
 		if !ok {
 			conn.write(websocket.CloseMessage, []byte{})

@@ -67,9 +67,12 @@ func (l *Lobby) ws_handler(w http.ResponseWriter, r *http.Request) {
 		name: "Jarda",
 	}
 
-	if err := race.join(player, ws); err != nil {
+	conn, err := race.join(player, ws)
+	if err != nil {
 		ws.WriteMessage(websocket.CloseMessage, []byte("Forbidden to join the race"))
 		ws.Close()
 		return
 	}
+
+	conn.run()
 }

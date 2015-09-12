@@ -18,7 +18,7 @@ type Race struct {
 	lobby        *Lobby
 
 	players      map[*Player]*connection
-	players_lock *sync.Mutex
+	players_lock sync.Mutex
 
 	receive chan []byte
 }
@@ -27,16 +27,16 @@ func NewRace(lobby *Lobby, race_code string) *Race {
 	return &Race{
 		lobby:     lobby,
 		Race_code: race_code,
-		players:   make(map[*Player]bool),
+		players:   make(map[*Player]*connection),
 		receive:   make(chan []byte),
 	}
 }
 
 func (r *Race) run() {
-	for event := range r.receive {
-		// do shit with incoming messages
-		// broadcast to all participants
-	}
+	//for _ := range r.receive {
+	// do shit with incoming messages
+	// broadcast to all participants
+	//}
 }
 
 func (r *Race) broadcast(message []byte) {
@@ -48,7 +48,7 @@ func (r *Race) broadcast(message []byte) {
 	}
 }
 
-func (r *Race) join(player *Player, ws *websocket.Conn) error {
+func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 	conn := NewConnection(ws, r.receive)
 
 	r.players_lock.Lock()
@@ -57,9 +57,7 @@ func (r *Race) join(player *Player, ws *websocket.Conn) error {
 	r.players[player] = conn
 	log.Printf("Player %s joined race %s", player.name, r.Race_code)
 
-	go conn.run()
-
-	return nil
+	return conn, nil
 }
 
 func (r *Race) leave(player *Player) error {
