@@ -61,20 +61,20 @@ func (l *Lobby) run() {
 		select {
 		case race_request_req := <-l.create_race:
 			race := l.make_race()
-			l.races[race.race_code] = race
+			l.races[race.Race_code] = race
 
 			// Run the race!
 			go race.run()
-			log.Println("Created race", race.race_code)
+			log.Println("Created race", race.Race_code)
 
 			// Send the newly created race back to requester
 			race_request_req <- race
 			close(race_request_req)
 		case race := <-l.unregister_race:
-			if _, in := l.races[race.race_code]; in {
-				delete(l.races, race.race_code)
+			if _, in := l.races[race.Race_code]; in {
+				delete(l.races, race.Race_code)
 			} else {
-				log.Println("ERROR", "can't unregister non-existing race", race.race_code)
+				log.Println("ERROR", "can't unregister non-existing race", race.Race_code)
 			}
 		}
 	}
@@ -97,7 +97,12 @@ func (l *Lobby) make_race() *Race {
 			break
 		}
 	}
-	return NewRace(l, race_code)
+
+	race := NewRace(l, race_code)
+	text := l.texts[rand.Intn(len(l.texts))]
+	race.Race_text = text
+
+	return race
 }
 
 func (l *Lobby) Create_private_race() *Race {

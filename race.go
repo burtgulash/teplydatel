@@ -7,11 +7,11 @@ import (
 
 type Race struct {
 	race_id      int64
-	race_code    string
+	Race_code    string
 	status       string
 	created_time time.Time
 	start_time   time.Time
-	race_text    string
+	Race_text    *string
 	lobby        *Lobby
 
 	players    map[*Player]bool
@@ -23,7 +23,7 @@ type Race struct {
 func NewRace(lobby *Lobby, race_code string) *Race {
 	return &Race{
 		lobby:      lobby,
-		race_code:  race_code,
+		Race_code:  race_code,
 		players:    make(map[*Player]bool),
 		receive:    make(chan []byte),
 		register:   make(chan *Player),
@@ -44,7 +44,7 @@ func (r *Race) run() {
 			break
 		case player := <-r.register:
 			r.players[player] = true
-			log.Println("Player", player.name, "joined race", r.race_code)
+			log.Println("Player", player.name, "joined race", r.Race_code)
 
 			// TODO after countdouwn is initiated, reset the timer
 			// timer.Reset(5 * time.Minute)

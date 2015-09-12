@@ -4,7 +4,9 @@ import (
 	"flag"
 	"html/template"
 	"log"
+	"math/rand"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/pat"
 )
@@ -14,6 +16,7 @@ var templates = template.Must(template.ParseGlob("templates/*.html"))
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	rand.Seed(time.Now().UTC().UnixNano())
 
 	flag.Parse()
 	lobby := NewLobby("res/texts.txt")

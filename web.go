@@ -31,7 +31,7 @@ func (l *Lobby) race_creator_handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/zavod/"+string(race.race_code[:]), http.StatusFound)
+	http.Redirect(w, r, "/zavod/"+race.Race_code, http.StatusFound)
 }
 
 func (l *Lobby) race_handler(w http.ResponseWriter, r *http.Request) {
