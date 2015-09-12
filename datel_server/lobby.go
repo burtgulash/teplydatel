@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"math/rand"
 )
 
 type Lobby struct {
@@ -47,10 +48,24 @@ func (l *Lobby) run() {
 	}
 }
 
+func gen_code() Race_code {
+	const letters = "abcdefghijklmnopqrstuvwxyz0123456789"
+	var race_code Race_code
+	for i := range race_code {
+		race_code[i] = letters[rand.Intn(len(letters))]
+	}
+	return race_code
+}
+
 func (l *Lobby) make_race() *Race {
 	// TODO create race_code here
 	var race_code Race_code
-	copy(race_code[:], "xxxxxxx")
+	for {
+		race_code = gen_code()
+		if _, exists := l.races[race_code]; !exists {
+			break
+		}
+	}
 	return NewRace(l, race_code)
 }
 
@@ -58,7 +73,7 @@ func (l *Lobby) Create_private_race() *Race {
 	req := make(chan *Race, 1)
 	l.create_race <- req
 	race := <-req
-	return NewRace(l, race.race_code)
+	return race
 }
 
 func (l *Lobby) Create_or_join_public_race() *Race {
