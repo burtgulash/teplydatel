@@ -5,15 +5,9 @@ import (
 	"time"
 )
 
-type Race_code [7]byte
-
-func (rc Race_code) String() string {
-	return string(rc[:])
-}
-
 type Race struct {
 	race_id      int64
-	race_code    Race_code
+	race_code    string
 	status       string
 	created_time time.Time
 	start_time   time.Time
@@ -26,7 +20,7 @@ type Race struct {
 	unregister chan *Player
 }
 
-func NewRace(lobby *Lobby, race_code Race_code) *Race {
+func NewRace(lobby *Lobby, race_code string) *Race {
 	return &Race{
 		lobby:      lobby,
 		race_code:  race_code,

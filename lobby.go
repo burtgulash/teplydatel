@@ -5,9 +5,14 @@ import (
 	"math/rand"
 )
 
+const (
+	letters        = "abcdefghijklmnopqrstuvwxyz0123456789"
+	race_code_size = 7
+)
+
 type Lobby struct {
 	players map[*Player]bool
-	races   map[Race_code]*Race
+	races   map[string]*Race
 
 	create_race     chan chan *Race
 	unregister_race chan *Race
@@ -16,7 +21,7 @@ type Lobby struct {
 func NewLobby() *Lobby {
 	return &Lobby{
 		players: make(map[*Player]bool),
-		races:   make(map[Race_code]*Race),
+		races:   make(map[string]*Race),
 
 		create_race:     make(chan chan *Race),
 		unregister_race: make(chan *Race),
@@ -48,20 +53,19 @@ func (l *Lobby) run() {
 	}
 }
 
-func gen_code() Race_code {
-	const letters = "abcdefghijklmnopqrstuvwxyz0123456789"
-	var race_code Race_code
-	for i := range race_code {
-		race_code[i] = letters[rand.Intn(len(letters))]
+func gen_code(size int) string {
+	b := make([]byte, size)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
 	}
-	return race_code
+	return string(b[:])
 }
 
 func (l *Lobby) make_race() *Race {
 	// TODO create race_code here
-	var race_code Race_code
+	var race_code string
 	for {
-		race_code = gen_code()
+		race_code = gen_code(race_code_size)
 		if _, exists := l.races[race_code]; !exists {
 			break
 		}

@@ -7,6 +7,13 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+var (
+	upgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
+)
+
 func (l *Lobby) lobby_handler(w http.ResponseWriter, r *http.Request) {
 	templates.ExecuteTemplate(w, "index.html", struct{ Name string }{"John"})
 }
@@ -34,14 +41,18 @@ func (l *Lobby) race_handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (l *Lobby) ws_handler(w http.ResponseWriter, r *http.Request) {
-	race_code_arg := r.URL.Query().Get(":race_code")
-	log.Println("cioa", race_code_arg)
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 
-	var race_code Race_code
-	copy(race_code[:], race_code_arg)
+	race_code := r.URL.Query().Get(":race_code")
+
 	race, in := l.races[race_code]
 	if !in {
-		http.Error(w, "Race does not exist", http.StatusNotFound)
+		ws.WriteMessage(404, []byte("Race does not exist"))
+		ws.Close()
 		return
 	}
 
@@ -49,17 +60,6 @@ func (l *Lobby) ws_handler(w http.ResponseWriter, r *http.Request) {
 	// else reject the connection
 	player := &Player{
 		name: "Jarda",
-	}
-
-	upgrader := websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-	}
-
-	ws, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-		return
 	}
 
 	player.conn = &connection{
