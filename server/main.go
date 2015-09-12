@@ -2,13 +2,15 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"github.com/drone/routes"
+	"html/template"
 	"log"
 	"net/http"
+
+	"github.com/drone/routes"
 )
 
 var addr = flag.String("addr", ":1338", "http server address")
+var templates = template.Must(template.ParseGlob("templates/*.html"))
 
 func main() {
 	flag.Parse()
@@ -16,10 +18,9 @@ func main() {
 	go lobby.run()
 
 	mux := routes.New()
-	mux.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "hello wordl!")
-	})
 	mux.Post("/ws/:race_code", lobby.ws_handler)
+	mux.Get("/zavod", lobby.race_handler)
+	mux.Get("/", lobby.lobby_handler)
 
 	http.Handle("/", mux)
 

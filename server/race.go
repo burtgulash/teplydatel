@@ -7,6 +7,10 @@ import (
 
 type Race_code [7]byte
 
+func (rc Race_code) String() string {
+	return string(rc[:])
+}
+
 type Race struct {
 	race_id      int64
 	race_code    Race_code
