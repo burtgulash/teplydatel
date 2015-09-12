@@ -11,7 +11,7 @@ func (l *Lobby) lobby_handler(w http.ResponseWriter, r *http.Request) {
 	templates.ExecuteTemplate(w, "index.html", struct{ Name string }{"John"})
 }
 
-func (l *Lobby) race_handler(w http.ResponseWriter, r *http.Request) {
+func (l *Lobby) race_creator_handler(w http.ResponseWriter, r *http.Request) {
 	race_type := r.URL.Query().Get("t")
 
 	var race *Race
@@ -27,8 +27,15 @@ func (l *Lobby) race_handler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/zavod/"+string(race.race_code[:]), http.StatusFound)
 }
 
+func (l *Lobby) race_handler(w http.ResponseWriter, r *http.Request) {
+	race_code := r.URL.Query().Get(":race_code")
+
+	templates.ExecuteTemplate(w, "race.html", struct{ race_code string }{race_code})
+}
+
 func (l *Lobby) ws_handler(w http.ResponseWriter, r *http.Request) {
 	race_code_arg := r.URL.Query().Get(":race_code")
+	log.Println("cioa", race_code_arg)
 
 	var race_code Race_code
 	copy(race_code[:], race_code_arg)
