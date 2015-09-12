@@ -1,8 +1,12 @@
 package main
 
 import (
+	"bufio"
+	"io"
 	"log"
 	"math/rand"
+	"os"
+	"strings"
 )
 
 const (
@@ -13,19 +17,42 @@ const (
 type Lobby struct {
 	players map[*Player]bool
 	races   map[string]*Race
+	texts   []*string
 
 	create_race     chan chan *Race
 	unregister_race chan *Race
 }
 
-func NewLobby() *Lobby {
-	return &Lobby{
+func NewLobby(texts_file string) *Lobby {
+	f, err := os.Open(texts_file)
+	defer f.Close()
+	if err != nil {
+		panic(err)
+	}
+
+	l := Lobby{
 		players: make(map[*Player]bool),
 		races:   make(map[string]*Race),
+		texts:   make([]*string, 0),
 
 		create_race:     make(chan chan *Race),
 		unregister_race: make(chan *Race),
 	}
+
+	reader := bufio.NewReader(f)
+	for {
+		line, err := reader.ReadString('\n')
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			panic(err)
+		}
+
+		line = strings.Trim(line, "\n")
+		l.texts = append(l.texts, &line)
+	}
+
+	return &l
 }
 
 func (l *Lobby) run() {

@@ -36,8 +36,13 @@ func (l *Lobby) race_creator_handler(w http.ResponseWriter, r *http.Request) {
 
 func (l *Lobby) race_handler(w http.ResponseWriter, r *http.Request) {
 	race_code := r.URL.Query().Get(":race_code")
+	race, exists := l.races[race_code]
+	if !exists {
+		http.Error(w, "Race not found", http.StatusNotFound)
+		return
+	}
 
-	templates.ExecuteTemplate(w, "race.html", struct{ race_code string }{race_code})
+	templates.ExecuteTemplate(w, "race.html", race)
 }
 
 func (l *Lobby) ws_handler(w http.ResponseWriter, r *http.Request) {

@@ -16,7 +16,7 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	flag.Parse()
-	lobby := NewLobby()
+	lobby := NewLobby("res/texts.txt")
 	go lobby.run()
 
 	r := pat.New()
