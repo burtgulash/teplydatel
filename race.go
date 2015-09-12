@@ -12,8 +12,8 @@ type Race struct {
 	race_id      int64
 	Race_code    string
 	status       string
-	created_time time.Time
-	start_time   time.Time
+	created_time *time.Time
+	start_time   *time.Time
 	Race_text    *string
 	lobby        *Lobby
 

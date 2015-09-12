@@ -23,9 +23,12 @@ func (l *Lobby) race_creator_handler(w http.ResponseWriter, r *http.Request) {
 
 	var race *Race
 	if race_type == "verejny" {
-		race = l.Create_or_join_public_race()
+		race = l.find_match_to_join()
+		if race == nil {
+			race = l.create_race()
+		}
 	} else if race_type == "soukromy" {
-		race = l.Create_private_race()
+		race = l.create_race()
 	} else {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return

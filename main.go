@@ -17,10 +17,9 @@ var templates = template.Must(template.ParseGlob("templates/*.html"))
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	rand.Seed(time.Now().UTC().UnixNano())
-
 	flag.Parse()
+
 	lobby := NewLobby("res/texts.txt")
-	go lobby.run()
 
 	r := pat.New()
 	r.Get("/ws/{race_code}", lobby.ws_handler)

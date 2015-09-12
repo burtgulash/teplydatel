@@ -3,10 +3,11 @@ package main
 import (
 	"bufio"
 	"io"
-	"log"
 	"math/rand"
 	"os"
 	"strings"
+	"sync"
+	"time"
 )
 
 const (
@@ -15,12 +16,13 @@ const (
 )
 
 type Lobby struct {
+	texts []*string
+
 	players map[*Player]bool
 	races   map[string]*Race
-	texts   []*string
 
-	create_race     chan chan *Race
-	unregister_race chan *Race
+	players_lock sync.Mutex
+	races_lock   sync.Mutex
 }
 
 func NewLobby(texts_file string) *Lobby {
@@ -34,9 +36,6 @@ func NewLobby(texts_file string) *Lobby {
 		players: make(map[*Player]bool),
 		races:   make(map[string]*Race),
 		texts:   make([]*string, 0),
-
-		create_race:     make(chan chan *Race),
-		unregister_race: make(chan *Race),
 	}
 
 	reader := bufio.NewReader(f)
@@ -55,31 +54,6 @@ func NewLobby(texts_file string) *Lobby {
 	return &l
 }
 
-func (l *Lobby) run() {
-	log.Println("Lobby running")
-	for {
-		select {
-		case race_request_req := <-l.create_race:
-			race := l.make_race()
-			l.races[race.Race_code] = race
-
-			// Run the race!
-			go race.run()
-			log.Println("Created race", race.Race_code)
-
-			// Send the newly created race back to requester
-			race_request_req <- race
-			close(race_request_req)
-		case race := <-l.unregister_race:
-			if _, in := l.races[race.Race_code]; in {
-				delete(l.races, race.Race_code)
-			} else {
-				log.Println("ERROR", "can't unregister non-existing race", race.Race_code)
-			}
-		}
-	}
-}
-
 func gen_code(size int) string {
 	b := make([]byte, size)
 	for i := range b {
@@ -88,8 +62,10 @@ func gen_code(size int) string {
 	return string(b[:])
 }
 
-func (l *Lobby) make_race() *Race {
-	// TODO create race_code here
+func (l *Lobby) create_race() *Race {
+	l.races_lock.Lock()
+	defer l.races_lock.Unlock()
+
 	var race_code string
 	for {
 		race_code = gen_code(race_code_size)
@@ -102,16 +78,31 @@ func (l *Lobby) make_race() *Race {
 	text := l.texts[rand.Intn(len(l.texts))]
 	race.Race_text = text
 
+	l.races[race_code] = race
+
 	return race
 }
 
-func (l *Lobby) Create_private_race() *Race {
-	req := make(chan *Race, 1)
-	l.create_race <- req
-	race := <-req
-	return race
-}
+func (l *Lobby) find_match_to_join() *Race {
+	attempts := 10
+	if len(l.races) < attempts {
+		attempts = len(l.races)
+	}
 
-func (l *Lobby) Create_or_join_public_race() *Race {
-	return l.Create_private_race()
+	i := 0
+	for _, race := range l.races {
+		if i >= attempts {
+			break
+		}
+
+		if race.start_time == nil {
+			return race
+		}
+
+		if time.Now().Before(race.start_time.Add(-4 * time.Second)) {
+			return race
+		}
+	}
+
+	return nil
 }
