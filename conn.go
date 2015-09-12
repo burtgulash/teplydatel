@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/gorilla/websocket"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 const (
@@ -10,24 +11,43 @@ const (
 )
 
 type connection struct {
-	ws     *websocket.Conn
-	send   chan []byte
-	player *Player
-	race   *Race
+	ws      *websocket.Conn
+	send    chan []byte
+	receive chan []byte
+	alive   bool
+}
+
+func NewConnection(ws *websocket.Conn, receive chan<- []byte) *connection {
+	return &connection{
+		// 8 is size of buffer - # of messages before it gets full
+		send:    make(chan []byte, 8),
+		ws:      ws,
+		receive: receive,
+		alive:   true,
+	}
+}
+
+func (conn *connection) run() {
+	go conn.ws_reader()
+	conn.ws_writer()
+}
+
+func (conn *connection) close() {
+	alive = false
+	close(conn.send)
 }
 
 func (conn *connection) ws_reader() {
 	defer func() {
-		conn.race.unregister <- conn.player
 		conn.ws.Close()
 	}()
 
-	for {
+	for alive {
 		_, message, err := conn.ws.ReadMessage()
 		if err != nil {
 			break
 		}
-		conn.race.receive <- message
+		conn.receive <- message
 	}
 }
 
@@ -41,16 +61,14 @@ func (conn *connection) ws_writer() {
 		conn.ws.Close()
 	}()
 
-	for {
-		select {
-		case message, ok := <-conn.send:
-			if !ok {
-				conn.write(websocket.CloseMessage, []byte{})
-				return
-			}
-			if err := conn.write(websocket.TextMessage, message); err != nil {
-				return
-			}
+	for alive {
+		message, ok := <-conn.send
+		if !ok {
+			conn.write(websocket.CloseMessage, []byte{})
+			return
+		}
+		if err := conn.write(websocket.TextMessage, message); err != nil {
+			return
 		}
 	}
 }

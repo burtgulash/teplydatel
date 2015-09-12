@@ -2,7 +2,10 @@ package main
 
 import (
 	"log"
+	"sync"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 type Race struct {
@@ -14,54 +17,61 @@ type Race struct {
 	Race_text    *string
 	lobby        *Lobby
 
-	players    map[*Player]bool
-	receive    chan []byte
-	register   chan *Player
-	unregister chan *Player
+	players      map[*Player]*connection
+	players_lock *sync.Mutex
+
+	receive chan []byte
 }
 
 func NewRace(lobby *Lobby, race_code string) *Race {
 	return &Race{
-		lobby:      lobby,
-		Race_code:  race_code,
-		players:    make(map[*Player]bool),
-		receive:    make(chan []byte),
-		register:   make(chan *Player),
-		unregister: make(chan *Player),
+		lobby:     lobby,
+		Race_code: race_code,
+		players:   make(map[*Player]bool),
+		receive:   make(chan []byte),
 	}
 }
 
 func (r *Race) run() {
-	timer := time.NewTimer(10 * time.Minute)
-	defer func() {
-		timer.Stop()
-		r.lobby.unregister_race <- r
-	}()
-
-	for {
-		select {
-		case <-timer.C:
-			break
-		case player := <-r.register:
-			r.players[player] = true
-			log.Println("Player", player.name, "joined race", r.Race_code)
-
-			// TODO after countdouwn is initiated, reset the timer
-			// timer.Reset(5 * time.Minute)
-		case player := <-r.unregister:
-			if _, ok := r.players[player]; ok {
-				delete(r.players, player)
-				close(player.conn.send)
-			}
-		case m := <-r.receive:
-			// TODO parse and process message here
-			for player := range r.players {
-				select {
-				case player.conn.send <- m:
-				default:
-					r.unregister <- player
-				}
-			}
-		}
+	for event := range r.receive {
+		// do shit with incoming messages
+		// broadcast to all participants
 	}
+}
+
+func (r *Race) broadcast(message []byte) {
+	r.players_lock.Lock()
+	defer r.players_lock.Unlock()
+
+	for _, conn := range r.players {
+		conn.send <- message
+	}
+}
+
+func (r *Race) join(player *Player, ws *websocket.Conn) error {
+	conn := NewConnection(ws, r.receive)
+
+	r.players_lock.Lock()
+	defer r.players_lock.Unlock()
+
+	r.players[player] = conn
+	log.Printf("Player %s joined race %s", player.name, r.Race_code)
+
+	go conn.run()
+
+	return nil
+}
+
+func (r *Race) leave(player *Player) error {
+	r.players_lock.Lock()
+	defer r.players_lock.Unlock()
+
+	if conn, ok := r.players[player]; ok {
+		delete(r.players, player)
+		conn.close()
+
+		log.Printf("Player %s left race %s", player.name, r.Race_code)
+	}
+
+	return nil
 }

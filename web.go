@@ -56,7 +56,7 @@ func (l *Lobby) ws_handler(w http.ResponseWriter, r *http.Request) {
 
 	race, in := l.races[race_code]
 	if !in {
-		ws.WriteMessage(404, []byte("Race does not exist"))
+		ws.WriteMessage(websocket.CloseMessage, []byte("Race does not exist"))
 		ws.Close()
 		return
 	}
@@ -67,14 +67,9 @@ func (l *Lobby) ws_handler(w http.ResponseWriter, r *http.Request) {
 		name: "Jarda",
 	}
 
-	player.conn = &connection{
-		send:   make(chan []byte, 256),
-		ws:     ws,
-		player: player,
-		race:   race,
+	if err := race.join(player, ws); err != nil {
+		ws.WriteMessage(websocket.CloseMessage, []byte("Forbidden to join the race"))
+		ws.Close()
+		return
 	}
-
-	race.register <- player
-	go player.conn.ws_reader()
-	player.conn.ws_writer()
 }
