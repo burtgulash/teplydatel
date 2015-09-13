@@ -1,11 +1,25 @@
 <!doctype html>
 <html lang="cs">
     <head>
+        <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
         <script type="text/javascript" src="/js/race.js"></script>
+        <style>
+#error {
+    color: red;
+}
+        </style>
     </head>
     <body>
         <h1>Race</h1>
+        <a href="/">lobby</a>
         <div id="status"></div>
-        <div>{{.Race_text}}</div>
+        <div>
+            <span id="done"></span>
+            <span id="error"></span>
+            <span id="cursor"></span>
+            <div>
+                <span id="remaining">{{.Race_text}}</span>
+            </div>
+        </div>
     </body>
 </html>

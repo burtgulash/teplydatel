@@ -79,6 +79,7 @@ func (l *Lobby) create_race() *Race {
 	race.Race_text = text
 
 	l.races[race_code] = race
+	go race.run()
 
 	return race
 }
@@ -99,7 +100,7 @@ func (l *Lobby) find_match_to_join() *Race {
 			return race
 		}
 
-		if time.Now().Before(race.start_time.Add(-4 * time.Second)) {
+		if time.Now().Before(race.start_time.Add(-5 * time.Second)) {
 			return race
 		}
 	}
