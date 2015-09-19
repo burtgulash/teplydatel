@@ -71,12 +71,22 @@ func (r *Race) run() {
 			r.lock.Lock()
 
 			if msg.data[0] == 'p' {
-				sender := r.players[msg.conn].player
-
 				m := msg.data[2:]
-				b := fmt.Sprintf("r %d %s", sender.player_id, m)
-				log.Println("DEBUG broadcasting message: " + b)
-				r.broadcast(b)
+
+				pp := r.players[msg.conn]
+
+				if (*r.Race_text)[pp.done:pp.done+len(m)] == m {
+					pp.done += len(m)
+				} else {
+					// not matching, what do?
+				}
+
+				sender := pp.player
+				r.broadcast(fmt.Sprintf("r %d %d", sender.player_id, pp.done))
+
+				if pp.done == len(*r.Race_text) {
+					r.broadcast(fmt.Sprintf("f %d", sender.player_id))
+				}
 			}
 
 			r.lock.Unlock()
@@ -86,6 +96,7 @@ func (r *Race) run() {
 }
 
 func (r *Race) broadcast(message string) {
+	log.Println("DEBUG broadcasting message: " + message)
 	for conn := range r.players {
 		conn.send <- message
 	}

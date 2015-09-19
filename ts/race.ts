@@ -48,6 +48,28 @@ window.onload = function () {
         }
     }
 
+    function onwsmessage(event) {
+        var data = event.data.split(" ");
+        var cmd = data[0];
+
+        var args = data.slice(1);
+        if (cmd == "status") {
+            status = args[0];
+            if (status == "live") {
+                $(document).keypress(onkeypress).keydown(onkeydown);
+            }
+            statusBox.text(status);
+        } else if (cmd == "r") {
+            console.log(args);
+        } else if (cmd == "f") {
+            console.log("player", args[0], "finished!!");
+        } else {
+            console.log("unknown command", cmd);
+        }
+
+        console.log("message received: ", event.data);
+    }
+
     if (window["WebSocket"]) {
         var parser = document.createElement("a");
         parser.href = window.location.href;
@@ -69,24 +91,6 @@ window.onload = function () {
             console.log("ws connection closed");
             statusBox.text("ws connection closed");
         }
-        conn.onmessage = function(event) {
-            var data = event.data.split(" ");
-            var cmd = data[0];
-
-            var args = data.slice(1);
-            if (cmd == "status") {
-                status = args[0];
-                if (status == "live") {
-                    $(document).keypress(onkeypress).keydown(onkeydown);
-                }
-                statusBox.text(status);
-            } else if (cmd == "r") {
-                console.log(args);
-            } else {
-                console.log("unknown command", cmd);
-            }
-
-            console.log("message received: ", event.data);
-        }
+        conn.onmessage = onwsmessage;
     }
 }
