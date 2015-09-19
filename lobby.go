@@ -100,7 +100,7 @@ func (l *Lobby) find_match_to_join() *Race {
 			return race
 		}
 
-		if time.Now().Before(race.start_time.Add(-5 * time.Second)) {
+		if time.Now().Before(race.start_time.Add(-3 * time.Second)) {
 			return race
 		}
 	}

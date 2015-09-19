@@ -5,12 +5,22 @@
         <script type="text/javascript" src="/js/race.js"></script>
         <style>
 
+.fields span {
+    white-space: pre-wrap;
+}
+
+
+body {
+    font-family: monospace;
+}
+
 #done {
     color: #777;
 }
 
 #error {
     color: red;
+    word-wrap: break-word;
 }
 
 #cursor {
@@ -27,7 +37,7 @@
         <h1>Race</h1>
         <a href="/">lobby</a>
         <div id="status"></div>
-        <div>
+        <div class="fields">
             <span id="done"></span><span id="error"></span><span id="cursor"></span><span id="remaining">{{.Race_text}}</span>
         </div>
     </body>

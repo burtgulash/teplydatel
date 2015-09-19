@@ -22,7 +22,6 @@ window.onload = function () {
     function onkeypress(event) {
         var expected = after_cursor[0];
         var c = String.fromCharCode(event.which);
-        console.log("keypress", c);
 
         if (c == expected && error_arr.length == 0) {
             after_cursor.shift();
@@ -38,9 +37,13 @@ window.onload = function () {
 
             done.text(before_cursor.join(""));
             remaining.text(after_cursor.join(""));
-        } else {
+        } else if (error_arr.length + 1 <= after_cursor.length) {
+            if (c == " ")
+                c = "_";
+
             error_arr.push(c);
             error.text(error_arr.join(""));
+            remaining.text(after_cursor.slice(error_arr.length).join(""));
         }
     }
 
@@ -49,6 +52,7 @@ window.onload = function () {
         if (event.which == 8) {
             error_arr.pop();
             error.text(error_arr.join(""));
+            remaining.text(after_cursor.slice(error_arr.length).join(""));
         }
     }
 

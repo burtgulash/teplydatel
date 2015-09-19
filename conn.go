@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -88,7 +87,6 @@ func (conn *connection) ws_writer() {
 			}
 
 		case <-ticker.C:
-			log.Printf("ping message")
 			if err := conn.write(websocket.PingMessage, []byte{}); err != nil {
 				return
 			}

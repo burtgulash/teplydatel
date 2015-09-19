@@ -10,6 +10,10 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+const (
+	countdown_period = time.Second * 6
+)
+
 type RaceMessage struct {
 	conn *connection
 	data string
@@ -120,7 +124,6 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 
 	if len(r.players) == 0 {
 	} else if r.start_time == nil {
-		countdown_period := time.Second * 10
 		start_time := time.Now().Add(countdown_period)
 		r.start_time = &start_time
 
