@@ -4,8 +4,22 @@
         <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
         <script type="text/javascript" src="/js/race.js"></script>
         <style>
+
+#done {
+    color: #777;
+}
+
 #error {
     color: red;
+}
+
+#cursor {
+    border-right: 1px solid #555;
+    animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+    50% {visibility: hidden; }
 }
         </style>
     </head>
@@ -14,12 +28,7 @@
         <a href="/">lobby</a>
         <div id="status"></div>
         <div>
-            <span id="done"></span>
-            <span id="error"></span>
-            <span id="cursor"></span>
-            <div>
-                <span id="remaining">{{.Race_text}}</span>
-            </div>
+            <span id="done"></span><span id="error"></span><span id="cursor"></span><span id="remaining">{{.Race_text}}</span>
         </div>
     </body>
 </html>

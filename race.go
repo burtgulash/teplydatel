@@ -51,7 +51,7 @@ func NewRace(lobby *Lobby, race_code string) *Race {
 func (r *Race) set_status(status string) {
 	old_status := r.status
 	r.status = status
-	r.broadcast("status " + status)
+	r.broadcast(fmt.Sprintf("s glob %s", status))
 	log.Printf("INFO race %s changed status %s -> %s", r.Race_code, old_status, status)
 }
 
@@ -140,7 +140,8 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 	}
 
 	r.players[pp.conn] = pp
-	log.Printf("INFO player %s joined race %s", pp.player.name, r.Race_code)
+	r.broadcast(fmt.Sprintf("j %d %s", player.player_id, player.name))
+	log.Printf("INFO player %s joined race %s", player.name, r.Race_code)
 
 	return conn, nil
 }

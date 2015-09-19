@@ -3,6 +3,10 @@
 
 window.onload = function () {
     var conn;
+    var race = {
+        status: "created",
+        players: {}
+    };
     var statusBox = $("#status");
 
     var done = $("#done");
@@ -18,6 +22,7 @@ window.onload = function () {
     function onkeypress(event) {
         var expected = after_cursor[0];
         var c = String.fromCharCode(event.which);
+        console.log("keypress", c);
 
         if (c == expected && error_arr.length == 0) {
             after_cursor.shift();
@@ -28,7 +33,6 @@ window.onload = function () {
             send_buf.push(c);
             if (send_buf.length >= 5 || after_cursor.length == 0) {
                 conn.send("p " + send_buf.join(""));
-                console.log("sending buf: ", send_buf.join(""));
                 send_buf = [];
             }
 
@@ -51,23 +55,45 @@ window.onload = function () {
     function onwsmessage(event) {
         var data = event.data.split(" ");
         var cmd = data[0];
+        var player_id = data[1];
+        var player;
 
-        var args = data.slice(1);
-        if (cmd == "status") {
-            status = args[0];
-            if (status == "live") {
+        if (player_id == "glob") {
+            player = null;
+        } else if (player_id in race.players) {
+            player = race.players[player_id];
+        } else {
+            console.log("Player", player_id, "not found!");
+        }
+
+        var args = data.slice(2);
+        if (cmd == "s") {
+            race.status = args[0];
+            if (race.status == "live") {
                 $(document).keypress(onkeypress).keydown(onkeydown);
             }
-            statusBox.text(status);
+            statusBox.text(race.status);
+        } else if (cmd == "j") {
+            race.players[player_id] = {
+                name: args[0],
+                done: 0,
+                connected: true,
+                finished: false
+            };
         } else if (cmd == "r") {
-            console.log(args);
+            player.done = args[0];
         } else if (cmd == "f") {
-            console.log("player", args[0], "finished!!");
+            player.finished = true;
+            console.log("player", player_id, "finished!!");
+        } else if (cmd == "d") {
+            console.log("player", player_id, "disconnected");
+            player.connected = false;
         } else {
             console.log("unknown command", cmd);
         }
 
-        console.log("message received: ", event.data);
+        // DEBUG
+        // console.log("message received: ", event.data);
     }
 
     if (window["WebSocket"]) {
