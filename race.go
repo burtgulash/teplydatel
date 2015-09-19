@@ -34,7 +34,6 @@ type Race struct {
 	receive      chan RaceMessage
 	player_join  chan *PlayerProgress
 	player_leave chan *Player
-	set_time     chan time.Time
 }
 
 func NewRace(lobby *Lobby, race_code string) *Race {
@@ -45,7 +44,6 @@ func NewRace(lobby *Lobby, race_code string) *Race {
 		receive:      make(chan RaceMessage, 16),
 		player_join:  make(chan *PlayerProgress, 2),
 		player_leave: make(chan *Player, 2),
-		set_time:     make(chan time.Time, 1),
 	}
 }
 
@@ -53,7 +51,7 @@ func (r *Race) set_status(status string) {
 	old_status := r.status
 	r.status = status
 	r.broadcast("status " + status)
-	log.Printf("race %s changed status %s -> %s", r.Race_code, old_status, status)
+	log.Printf("INFO race %s changed status %s -> %s", r.Race_code, old_status, status)
 }
 
 func (r *Race) run() {
@@ -64,15 +62,8 @@ func (r *Race) run() {
 		select {
 
 		case <-countdown:
+			log.Printf("INFO race %s started!", r.Race_code)
 			r.set_status("live")
-
-		case start_time := <-r.set_time:
-			r.start_time = &start_time
-			log.Printf("race %s set start time to %s", r.Race_code, r.start_time.Format("15:04:05.000"))
-			go func() {
-				<-time.After(start_time.Sub(time.Now()))
-				countdown <- true
-			}()
 
 		case msg := <-r.receive:
 			if msg.data[0] == 'p' {
@@ -80,18 +71,25 @@ func (r *Race) run() {
 
 				m := msg.data[2:]
 				b := fmt.Sprintf("r %d %s", sender.player_id, m)
-				log.Println("broadcasting message: " + b)
+				log.Println("DEBUG broadcasting message: " + b)
 				r.broadcast(b)
 			}
 
 		case pp := <-r.player_join:
 			r.players[pp.conn] = pp
-			log.Printf("Player %s joined race %s", pp.player.name, r.Race_code)
+			log.Printf("INFO player %s joined race %s", pp.player.name, r.Race_code)
 
 			if len(r.players) <= 1 {
 			} else if r.start_time == nil {
 				countdown_period := time.Second * 10
-				r.set_time <- time.Now().Add(countdown_period)
+				start_time := time.Now().Add(countdown_period)
+				r.start_time = &start_time
+
+				log.Printf("INFO race %s set start time to %s", r.Race_code, r.start_time.Format("15:04:05.000"))
+				go func() {
+					<-time.After(start_time.Sub(time.Now()))
+					countdown <- true
+				}()
 			} else {
 				still_time_to_join := time.Second * 4
 				time.Now().Before(r.start_time.Add(-still_time_to_join))
@@ -101,7 +99,7 @@ func (r *Race) run() {
 			for _, pp := range r.players {
 				if pp.player == player {
 					pp.conn.close()
-					log.Printf("Player %s left race %s", player.name, r.Race_code)
+					log.Printf("INFO player %s left race %s", player.name, r.Race_code)
 					break
 				}
 			}
