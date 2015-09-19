@@ -12,17 +12,17 @@ const (
 
 type connection struct {
 	ws      *websocket.Conn
-	send    chan []byte
-	receive chan []byte
+	receive chan RaceMessage
+	send    chan string
 	alive   bool
 }
 
-func NewConnection(ws *websocket.Conn, receive chan []byte) *connection {
+func NewConnection(ws *websocket.Conn, player *Player, receive chan RaceMessage) *connection {
 	return &connection{
 		// 8 is size of buffer - # of messages before it gets full
-		send:    make(chan []byte, 8),
-		ws:      ws,
+		send:    make(chan string, 8),
 		receive: receive,
+		ws:      ws,
 		alive:   true,
 	}
 }
@@ -47,7 +47,11 @@ func (conn *connection) ws_reader() {
 		if err != nil {
 			break
 		}
-		conn.receive <- message
+
+		conn.receive <- RaceMessage{
+			conn: conn,
+			data: string(message[:]),
+		}
 	}
 }
 
@@ -67,7 +71,7 @@ func (conn *connection) ws_writer() {
 			conn.write(websocket.CloseMessage, []byte{})
 			return
 		}
-		if err := conn.write(websocket.TextMessage, message); err != nil {
+		if err := conn.write(websocket.TextMessage, []byte(message)); err != nil {
 			return
 		}
 	}

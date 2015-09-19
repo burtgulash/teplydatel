@@ -5,6 +5,7 @@ window.onload = function () {
     var done = $("#done");
     var error = $("#error");
     var remaining = $("#remaining");
+    var send_buf = [];
     var before_cursor = [];
     var error_arr = [];
     var after_cursor = remaining.text().split("");
@@ -15,7 +16,14 @@ window.onload = function () {
         if (c == expected && error_arr.length == 0) {
             after_cursor.shift();
             before_cursor.push(c);
-            console.log(before_cursor, after_cursor);
+            // Each 5 successful characters or when 'remaining'
+            // buffer depleted, send progress report
+            send_buf.push(c);
+            if (send_buf.length >= 5 || after_cursor.length == 0) {
+                conn.send("p " + send_buf.join(""));
+                console.log("sending buf: ", send_buf.join(""));
+                send_buf = [];
+            }
             done.text(before_cursor.join(""));
             remaining.text(after_cursor.join(""));
         }
@@ -24,6 +32,7 @@ window.onload = function () {
             error.text(error_arr.join(""));
         }
     }
+    // handle backspace
     function onkeydown(event) {
         if (event.which == 8) {
             error_arr.pop();
@@ -57,6 +66,12 @@ window.onload = function () {
                     $(document).keypress(onkeypress).keydown(onkeydown);
                 }
                 statusBox.text(status);
+            }
+            else if (cmd == "r") {
+                console.log(args);
+            }
+            else {
+                console.log("unknown command", cmd);
             }
             console.log("message received: ", event.data);
         };

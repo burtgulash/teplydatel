@@ -1,12 +1,25 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
 )
+
+type RaceMessage struct {
+	conn *connection
+	data string
+}
+
+type PlayerProgress struct {
+	conn   *connection
+	player *Player
+	race   *Race
+	done   int
+}
 
 type Race struct {
 	race_id      int64
@@ -17,10 +30,10 @@ type Race struct {
 	Race_text    *string
 	lobby        *Lobby
 
-	players      map[*Player]*connection
+	players      map[*connection]*PlayerProgress
 	players_lock sync.Mutex
 
-	receive  chan []byte
+	receive  chan RaceMessage
 	set_time chan time.Time
 }
 
@@ -28,8 +41,8 @@ func NewRace(lobby *Lobby, race_code string) *Race {
 	return &Race{
 		lobby:     lobby,
 		Race_code: race_code,
-		players:   make(map[*Player]*connection),
-		receive:   make(chan []byte),
+		players:   make(map[*connection]*PlayerProgress),
+		receive:   make(chan RaceMessage),
 		set_time:  make(chan time.Time),
 	}
 }
@@ -56,6 +69,15 @@ func (r *Race) run() {
 				<-time.After(start_time.Sub(time.Now()))
 				countdown <- true
 			}()
+		case msg := <-r.receive:
+			if msg.data[0] == 'p' {
+				sender := r.players[msg.conn].player
+
+				m := msg.data[2:]
+				b := fmt.Sprintf("r %d %s", sender.player_id, m)
+				log.Println("broadcasting message: " + b)
+				r.broadcast(b)
+			}
 		}
 	}
 }
@@ -64,18 +86,25 @@ func (r *Race) broadcast(message string) {
 	r.players_lock.Lock()
 	defer r.players_lock.Unlock()
 
-	for _, conn := range r.players {
-		conn.send <- []byte(message)
+	for conn := range r.players {
+		conn.send <- message
 	}
 }
 
 func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
-	conn := NewConnection(ws, r.receive)
+	conn := NewConnection(ws, player, r.receive)
+
+	pp := PlayerProgress{
+		conn:   conn,
+		player: player,
+		race:   r,
+		done:   0,
+	}
 
 	r.players_lock.Lock()
 	defer r.players_lock.Unlock()
 
-	r.players[player] = conn
+	r.players[conn] = &pp
 	log.Printf("Player %s joined race %s", player.name, r.Race_code)
 
 	if len(r.players) <= 1 {
@@ -94,11 +123,13 @@ func (r *Race) leave(player *Player) error {
 	r.players_lock.Lock()
 	defer r.players_lock.Unlock()
 
-	if conn, ok := r.players[player]; ok {
-		delete(r.players, player)
-		conn.close()
+	for conn, pp := range r.players {
+		if pp.player == player {
 
-		log.Printf("Player %s left race %s", player.name, r.Race_code)
+			conn.close()
+			log.Printf("Player %s left race %s", player.name, r.Race_code)
+			break
+		}
 	}
 
 	return nil
