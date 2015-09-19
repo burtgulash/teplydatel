@@ -69,11 +69,10 @@ func (r *Race) run() {
 
 		case msg := <-r.receive:
 			r.lock.Lock()
+			pp := r.players[msg.conn]
 
 			if msg.data[0] == 'p' {
 				m := msg.data[2:]
-
-				pp := r.players[msg.conn]
 
 				if (*r.Race_text)[pp.done:pp.done+len(m)] == m {
 					pp.done += len(m)
@@ -81,12 +80,17 @@ func (r *Race) run() {
 					// not matching, what do?
 				}
 
-				sender := pp.player
-				r.broadcast(fmt.Sprintf("r %d %d", sender.player_id, pp.done))
+				r.broadcast(fmt.Sprintf("r %d %d", pp.player.player_id, pp.done))
 
 				if pp.done == len(*r.Race_text) {
-					r.broadcast(fmt.Sprintf("f %d", sender.player_id))
+					r.broadcast(fmt.Sprintf("f %d", pp.player.player_id))
 				}
+			} else if msg.data == "disconnect" {
+				pp.conn.close()
+				delete(r.players, pp.conn)
+				log.Printf("INFO player %s left race %s", pp.player.name, r.Race_code)
+				r.broadcast(fmt.Sprintf("d %d", pp.player.player_id))
+
 			}
 
 			r.lock.Unlock()
@@ -139,20 +143,4 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 	log.Printf("INFO player %s joined race %s", pp.player.name, r.Race_code)
 
 	return conn, nil
-}
-
-func (r *Race) leave(player *Player) error {
-	r.lock.Lock()
-	defer r.lock.Unlock()
-
-	for _, pp := range r.players {
-		if pp.player == player {
-			pp.conn.close()
-			log.Printf("INFO player %s left race %s", player.name, r.Race_code)
-
-			return nil
-		}
-	}
-
-	return errors.New("player does not exist")
 }
