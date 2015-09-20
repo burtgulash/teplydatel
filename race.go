@@ -86,32 +86,7 @@ func (r *Race) run() {
 
 		case msg := <-r.receive:
 			r.lock.Lock()
-			pp := r.players[msg.conn]
-
-			if msg.data[0] == 'p' {
-				m := []rune(msg.data[2:])
-				text := r.race_text
-				length := len(m)
-
-				if rune_equals(text[pp.done:pp.done+length], m) {
-					pp.done += length
-				} else {
-					// not matching, what do?
-				}
-
-				r.broadcast(fmt.Sprintf("r %d %d", pp.player.player_id, pp.done))
-
-				if pp.done == len(text) {
-					r.broadcast(fmt.Sprintf("f %d", pp.player.player_id))
-				}
-			} else if msg.data == "disconnect" {
-				pp.conn.close()
-				delete(r.players, pp.conn)
-				log.Printf("INFO player %s left race %s", pp.player.name, r.Race_code)
-				r.broadcast(fmt.Sprintf("d %d", pp.player.player_id))
-
-			}
-
+			r.process(msg)
 			r.lock.Unlock()
 
 		}
@@ -122,6 +97,34 @@ func (r *Race) broadcast(message string) {
 	log.Println("DEBUG broadcasting message: " + message)
 	for conn := range r.players {
 		conn.send <- message
+	}
+}
+
+func (r *Race) process(msg RaceMessage) {
+	pp := r.players[msg.conn]
+
+	if msg.data[0] == 'p' {
+		m := []rune(msg.data[2:])
+		text := r.race_text
+		length := len(m)
+
+		if rune_equals(text[pp.done:pp.done+length], m) {
+			pp.done += length
+		} else {
+			// not matching, what do?
+		}
+
+		r.broadcast(fmt.Sprintf("r %d %d", pp.player.player_id, pp.done))
+
+		if pp.done == len(text) {
+			r.broadcast(fmt.Sprintf("f %d", pp.player.player_id))
+		}
+	} else if msg.data == "disconnect" {
+		pp.conn.close()
+		delete(r.players, pp.conn)
+		log.Printf("INFO player %s left race %s", pp.player.name, r.Race_code)
+		r.broadcast(fmt.Sprintf("d %d", pp.player.player_id))
+
 	}
 }
 
