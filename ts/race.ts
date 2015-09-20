@@ -70,7 +70,7 @@ window.onload = function () {
             var progress = race.players[player_id].progress;
             var pg;
             if (progress.done == race.len)
-                pg = "finished!";
+                pg = "hotovo!";
             else {
                 var p = Math.round(100 * progress.done / race.len);
                 pg = p + "%";
@@ -79,9 +79,9 @@ window.onload = function () {
             var accuracy = Math.min(race.len, progress.errors) / (progress.done + 1);
             accuracy = Math.round(100 * (1 - accuracy));
 
-            standings.append("<li>Player " + player_id +
+            standings.append("<li>Hráč " + player_id +
                     ": " + pg +
-                    ", accuracy: " + accuracy + "%" +
+                    ", přesnost: " + accuracy + "%" +
                     ", wpm: " + progress.wpm + 
                     "</li>");
         }
@@ -107,7 +107,7 @@ window.onload = function () {
             if (race.status == "live") {
                 $(document).keypress(onkeypress).keydown(onkeydown);
             }
-            statusBox.text(race.status);
+            statusBox.text("Piš!");
             updateStandings();
         } else if (cmd == "j") {
             race.players[player_id] = {
@@ -128,19 +128,19 @@ window.onload = function () {
             progress.wpm = +args[2];
             updateStandings();
         } else if (cmd == "c") {
-            statusBox.text(+args[0] + "s remain...");
+            statusBox.text(+args[0] + "s zbývá...");
         } else if (cmd == "f") {
             player.finished = true;
-            console.log("player", player_id, "finished!!");
+            console.log("player", player_id, "dokončil!!");
         } else if (cmd == "d") {
-            console.log("player", player_id, "disconnected");
+            console.log("player", player_id, "odpojen");
             player.connected = false;
         } else {
             console.log("unknown command", cmd);
         }
 
         // DEBUG
-        console.log("message received: ", event.data);
+        //console.log("message received: ", event.data);
     }
 
     if (window["WebSocket"]) {
