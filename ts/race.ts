@@ -108,6 +108,7 @@ window.onload = function () {
                 $(document).keypress(onkeypress).keydown(onkeydown);
             }
             statusBox.text(race.status);
+            updateStandings();
         } else if (cmd == "j") {
             race.players[player_id] = {
                 id: player_id,
