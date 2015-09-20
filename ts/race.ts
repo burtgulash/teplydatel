@@ -15,6 +15,7 @@ window.onload = function () {
     var remaining = $("#remaining");
 
     var send_buf = [];
+    var error_counter = 0;
     var before_cursor = [];
     var error_arr = [];
     var after_cursor = remaining.text().split("");
@@ -32,13 +33,18 @@ window.onload = function () {
             // buffer depleted, send progress report
             send_buf.push(c);
             if (send_buf.length >= 5 || after_cursor.length == 0) {
-                conn.send("p " + send_buf.join(""));
+                conn.send("p " + error_counter +
+                        " " + send_buf.join(""));
+
                 send_buf = [];
+                error_counter = 0;
             }
 
             done.text(before_cursor.join(""));
             remaining.text(after_cursor.join(""));
         } else if (error_arr.length + 1 <= after_cursor.length) {
+            error_counter ++;
+
             if (c == " ")
                 c = "_";
 
@@ -70,12 +76,13 @@ window.onload = function () {
                 pg = p + "%";
             }
 
-            standings.append("<li>Player " +
-                    player_id +
-                    ": " +
-                    pg +
-                    ", wpm: " +
-                    progress.wpm,
+            var accuracy = Math.min(race.len, progress.errors) / (progress.done + 1);
+            accuracy = Math.round(100 * (1 - accuracy));
+
+            standings.append("<li>Player " + player_id +
+                    ": " + pg +
+                    ", accuracy: " + accuracy + "%" +
+                    ", wpm: " + progress.wpm + 
                     "</li>");
         }
     }
@@ -109,13 +116,15 @@ window.onload = function () {
                 finished: false,
                 progress: {
                     done: 0,
+                    errors: 0,
                     wpm: 0
                 }
             };
         } else if (cmd == "r") {
             var progress = player.progress;
-            progress.done = args[0];
-            progress.wpm = args[1];
+            progress.done = +args[0];
+            progress.errors = +args[1];
+            progress.wpm = +args[2];
             updateStandings();
         } else if (cmd == "f") {
             player.finished = true;

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"regexp"
+	"strconv"
 	"sync"
 	"time"
 
@@ -14,6 +16,10 @@ const (
 	countdown_period = time.Second * 6
 )
 
+var (
+	progress_rx = regexp.MustCompile("(\\d+) (.*)")
+)
+
 type RaceMessage struct {
 	conn *connection
 	data string
@@ -21,7 +27,8 @@ type RaceMessage struct {
 
 type progressItem struct {
 	timestamp time.Time
-	done      int
+	num_ok    int
+	num_errs  int
 }
 
 type PlayerProgress struct {
@@ -29,26 +36,30 @@ type PlayerProgress struct {
 	player *Player
 	race   *Race
 
-	done        int
-	doneHistory []*progressItem
-	currentWpm  float64
+	done       int
+	errors     int
+	history    []*progressItem
+	currentWpm float64
 }
 
 func (pp *PlayerProgress) start(at time.Time) {
 	pp.done = 0
-	pp.doneHistory = []*progressItem{&progressItem{at, 0}}
+	pp.history = []*progressItem{&progressItem{at, 0, 0}}
 	pp.currentWpm = 0.0
 }
 
-func (pp *PlayerProgress) add_progress(at time.Time, add int) {
-	pp.done += add
-	if pp.doneHistory == nil {
-		panic("uninitialized doneHistory!")
-	}
-	first := pp.doneHistory[0]
+func (pp *PlayerProgress) add_progress(at time.Time, num_ok, num_errs int) {
+	pp.done += num_ok
+	pp.errors += num_errs
 
-	new_progress := &progressItem{at, pp.done}
-	pp.doneHistory = append(pp.doneHistory, new_progress)
+	if pp.history == nil {
+		panic("uninitialized history!")
+	}
+
+	new_progress := &progressItem{at, num_ok, num_errs}
+	pp.history = append(pp.history, new_progress)
+
+	first := pp.history[0]
 	pp.currentWpm = wpm(pp.done, time.Now().Sub(first.timestamp))
 }
 
@@ -122,7 +133,25 @@ func (r *Race) run() {
 
 		case msg := <-r.receive:
 			r.lock.Lock()
-			r.process(msg)
+			pp := r.players[msg.conn]
+
+			if msg.data[0] == 'p' {
+				m := progress_rx.FindStringSubmatch(msg.data[2:])
+
+				num_errors, err := strconv.Atoi(m[1])
+				if err != nil {
+					break
+				}
+
+				r.handle_progress(pp, num_errors, []rune(m[2]))
+
+			} else if msg.data == "disconnect" {
+				pp.conn.close()
+				delete(r.players, pp.conn)
+				log.Printf("INFO player %s left race %s", pp.player.name, r.Race_code)
+				r.broadcast(fmt.Sprintf("d %d", pp.player.player_id))
+
+			}
 			r.lock.Unlock()
 
 		}
@@ -136,32 +165,20 @@ func (r *Race) broadcast(message string) {
 	}
 }
 
-func (r *Race) process(msg RaceMessage) {
-	pp := r.players[msg.conn]
+func (r *Race) handle_progress(pp *PlayerProgress, num_errors int, msg []rune) {
+	text := r.race_text
+	length := len(msg)
 
-	if msg.data[0] == 'p' {
-		m := []rune(msg.data[2:])
-		text := r.race_text
-		length := len(m)
+	if rune_equals(text[pp.done:pp.done+length], msg) {
+		pp.add_progress(time.Now(), length, num_errors)
+	} else {
+		// not matching, what do?
+	}
 
-		if rune_equals(text[pp.done:pp.done+length], m) {
-			pp.add_progress(time.Now(), length)
-		} else {
-			// not matching, what do?
-		}
+	r.broadcast(fmt.Sprintf("r %d %d %d %.2f", pp.player.player_id, pp.done, pp.errors, pp.currentWpm))
 
-		r.broadcast(fmt.Sprintf("r %d %d %.2f", pp.player.player_id, pp.done, pp.currentWpm))
-
-		if pp.done == len(text) {
-			r.broadcast(fmt.Sprintf("f %d", pp.player.player_id))
-		}
-
-	} else if msg.data == "disconnect" {
-		pp.conn.close()
-		delete(r.players, pp.conn)
-		log.Printf("INFO player %s left race %s", pp.player.name, r.Race_code)
-		r.broadcast(fmt.Sprintf("d %d", pp.player.player_id))
-
+	if pp.done == len(text) {
+		r.broadcast(fmt.Sprintf("f %d", pp.player.player_id))
 	}
 }
 
@@ -171,12 +188,12 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 
 	conn := NewConnection(ws, player, r.receive)
 	pp := &PlayerProgress{
-		conn:        conn,
-		player:      player,
-		race:        r,
-		done:        0,
-		doneHistory: nil,
-		currentWpm:  0.0,
+		conn:       conn,
+		player:     player,
+		race:       r,
+		done:       0,
+		history:    nil,
+		currentWpm: 0.0,
 	}
 
 	if len(r.players) == 0 {
