@@ -36,10 +36,13 @@ body {
     <body>
         <h1>Race</h1>
         <a href="/">lobby</a>
-        <div id="status"></div>
         <div class="fields">
             <span id="done"></span><span id="error"></span><span id="cursor"></span><span id="remaining">{{.Race_string}}</span>
         </div>
-        <div id="race"></div>
+        <div id="race">
+            <h2>Race status</h2>
+            <div id="status"></div>
+            <ul id="standings"></ul>
+        </div>
     </body>
 </html>

@@ -57,6 +57,27 @@ window.onload = function () {
         }
     }
 
+    function updateStandings() {
+        var standings = $("ul#standings");
+        standings.html("");
+        for (var player_id in race.players) {
+            var player = race.players[player_id];
+            var progress;
+            if (player.done == race.len)
+                progress = "finished!";
+            else {
+                var p = Math.round(100 * player.done / race.len);
+                progress = p + "%";
+            }
+
+            standings.append("<li>Player "+
+                    player_id+
+                    ": "+
+                    progress+
+                    "</li>");
+        }
+    }
+
     function onwsmessage(event) {
         var data = event.data.split(" ");
         var cmd = data[0];
@@ -80,6 +101,7 @@ window.onload = function () {
             statusBox.text(race.status);
         } else if (cmd == "j") {
             race.players[player_id] = {
+                id: player_id,
                 name: args[0],
                 done: 0,
                 connected: true,
@@ -87,7 +109,7 @@ window.onload = function () {
             };
         } else if (cmd == "r") {
             player.done = args[0];
-            $("#race").text(JSON.stringify(race, null, 4));
+            updateStandings();
         } else if (cmd == "f") {
             player.finished = true;
             console.log("player", player_id, "finished!!");
