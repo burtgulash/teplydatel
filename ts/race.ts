@@ -5,6 +5,7 @@ window.onload = function () {
     var conn;
     var race = {
         status: "created",
+        len: 0,
         players: {}
     };
     var statusBox = $("#status");
@@ -17,7 +18,7 @@ window.onload = function () {
     var before_cursor = [];
     var error_arr = [];
     var after_cursor = remaining.text().split("");
-    var length = after_cursor.length;
+    race.len = after_cursor.length;
 
     function onkeypress(event) {
         var expected = after_cursor[0];
@@ -86,6 +87,7 @@ window.onload = function () {
             };
         } else if (cmd == "r") {
             player.done = args[0];
+            $("#race").text(JSON.stringify(race, null, 4));
         } else if (cmd == "f") {
             player.finished = true;
             console.log("player", player_id, "finished!!");

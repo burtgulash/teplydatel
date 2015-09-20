@@ -32,7 +32,8 @@ type Race struct {
 	status       string
 	created_time *time.Time
 	start_time   *time.Time
-	Race_text    *string
+	race_text    []rune
+	Race_string  *string
 	lobby        *Lobby
 
 	players map[*connection]*PlayerProgress
@@ -59,6 +60,18 @@ func (r *Race) set_status(status string) {
 	log.Printf("INFO race %s changed status %s -> %s", r.Race_code, old_status, status)
 }
 
+func rune_equals(a, b []rune) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := 0; i < len(a); i++ {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
 func (r *Race) run() {
 	r.set_status("created")
 	for {
@@ -76,17 +89,19 @@ func (r *Race) run() {
 			pp := r.players[msg.conn]
 
 			if msg.data[0] == 'p' {
-				m := msg.data[2:]
+				m := []rune(msg.data[2:])
+				text := r.race_text
+				length := len(m)
 
-				if (*r.Race_text)[pp.done:pp.done+len(m)] == m {
-					pp.done += len(m)
+				if rune_equals(text[pp.done:pp.done+length], m) {
+					pp.done += length
 				} else {
 					// not matching, what do?
 				}
 
 				r.broadcast(fmt.Sprintf("r %d %d", pp.player.player_id, pp.done))
 
-				if pp.done == len(*r.Race_text) {
+				if pp.done == len(text) {
 					r.broadcast(fmt.Sprintf("f %d", pp.player.player_id))
 				}
 			} else if msg.data == "disconnect" {
