@@ -61,19 +61,21 @@ window.onload = function () {
         var standings = $("ul#standings");
         standings.html("");
         for (var player_id in race.players) {
-            var player = race.players[player_id];
-            var progress;
-            if (player.done == race.len)
-                progress = "finished!";
+            var progress = race.players[player_id].progress;
+            var pg;
+            if (progress.done == race.len)
+                pg = "finished!";
             else {
-                var p = Math.round(100 * player.done / race.len);
-                progress = p + "%";
+                var p = Math.round(100 * progress.done / race.len);
+                pg = p + "%";
             }
 
-            standings.append("<li>Player "+
-                    player_id+
-                    ": "+
-                    progress+
+            standings.append("<li>Player " +
+                    player_id +
+                    ": " +
+                    pg +
+                    ", wpm: " +
+                    progress.wpm,
                     "</li>");
         }
     }
@@ -103,12 +105,17 @@ window.onload = function () {
             race.players[player_id] = {
                 id: player_id,
                 name: args[0],
-                done: 0,
                 connected: true,
-                finished: false
+                finished: false,
+                progress: {
+                    done: 0,
+                    wpm: 0
+                }
             };
         } else if (cmd == "r") {
-            player.done = args[0];
+            var progress = player.progress;
+            progress.done = args[0];
+            progress.wpm = args[1];
             updateStandings();
         } else if (cmd == "f") {
             player.finished = true;

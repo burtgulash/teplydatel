@@ -19,11 +19,43 @@ type RaceMessage struct {
 	data string
 }
 
+type progressItem struct {
+	timestamp time.Time
+	done      int
+}
+
 type PlayerProgress struct {
 	conn   *connection
 	player *Player
 	race   *Race
-	done   int
+
+	done        int
+	doneHistory []*progressItem
+	currentWpm  float64
+}
+
+func (pp *PlayerProgress) start(at time.Time) {
+	pp.done = 0
+	pp.doneHistory = []*progressItem{&progressItem{at, 0}}
+	pp.currentWpm = 0.0
+}
+
+func (pp *PlayerProgress) add_progress(at time.Time, add int) {
+	pp.done += add
+	if pp.doneHistory == nil {
+		panic("uninitialized doneHistory!")
+	}
+	first := pp.doneHistory[0]
+
+	new_progress := &progressItem{at, pp.done}
+	pp.doneHistory = append(pp.doneHistory, new_progress)
+	pp.currentWpm = wpm(pp.done, time.Now().Sub(first.timestamp))
+}
+
+func wpm(num_characters int, period time.Duration) float64 {
+	cps := float64(num_characters) / period.Seconds()
+	wps := cps / 5.0
+	return wps * 60.0
 }
 
 type Race struct {
@@ -82,6 +114,10 @@ func (r *Race) run() {
 
 			r.lock.Lock()
 			r.set_status("live")
+			now := time.Now()
+			for _, pp := range r.players {
+				pp.start(now)
+			}
 			r.lock.Unlock()
 
 		case msg := <-r.receive:
@@ -109,16 +145,17 @@ func (r *Race) process(msg RaceMessage) {
 		length := len(m)
 
 		if rune_equals(text[pp.done:pp.done+length], m) {
-			pp.done += length
+			pp.add_progress(time.Now(), length)
 		} else {
 			// not matching, what do?
 		}
 
-		r.broadcast(fmt.Sprintf("r %d %d", pp.player.player_id, pp.done))
+		r.broadcast(fmt.Sprintf("r %d %d %.2f", pp.player.player_id, pp.done, pp.currentWpm))
 
 		if pp.done == len(text) {
 			r.broadcast(fmt.Sprintf("f %d", pp.player.player_id))
 		}
+
 	} else if msg.data == "disconnect" {
 		pp.conn.close()
 		delete(r.players, pp.conn)
@@ -134,10 +171,12 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 
 	conn := NewConnection(ws, player, r.receive)
 	pp := &PlayerProgress{
-		conn:   conn,
-		player: player,
-		race:   r,
-		done:   0,
+		conn:        conn,
+		player:      player,
+		race:        r,
+		done:        0,
+		doneHistory: nil,
+		currentWpm:  0.0,
 	}
 
 	if len(r.players) == 0 {
