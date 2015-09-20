@@ -31,8 +31,8 @@ func main() {
 	http.Handle("/js/", http.StripPrefix("/js/", js))
 	http.Handle("/", r)
 
-	log.Println("Serving on", *addr)
+	log.Println("INFO serving on", *addr)
 	if err := http.ListenAndServe(*addr, nil); err != nil {
-		log.Fatal("ListenAndServe: ", err)
+		log.Fatal("ERROR ListenAndServe: ", err)
 	}
 }

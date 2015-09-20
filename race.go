@@ -83,7 +83,8 @@ type Race struct {
 	lock    sync.Mutex
 
 	receive   chan RaceMessage
-	countdown chan bool
+	countdown chan int
+	start_it  chan bool
 }
 
 func NewRace(lobby *Lobby, race_code string) *Race {
@@ -92,7 +93,8 @@ func NewRace(lobby *Lobby, race_code string) *Race {
 		Race_code: race_code,
 		players:   make(map[*connection]*PlayerProgress),
 		receive:   make(chan RaceMessage, 16),
-		countdown: make(chan bool, 1),
+		countdown: make(chan int),
+		start_it:  make(chan bool, 1),
 	}
 }
 
@@ -117,10 +119,11 @@ func rune_equals(a, b []rune) bool {
 
 func (r *Race) run() {
 	r.set_status("created")
+
 	for {
 		select {
 
-		case <-r.countdown:
+		case <-r.start_it:
 			log.Printf("INFO race %s started!", r.Race_code)
 
 			r.lock.Lock()
@@ -129,6 +132,11 @@ func (r *Race) run() {
 			for _, pp := range r.players {
 				pp.start(now)
 			}
+			r.lock.Unlock()
+
+		case remains := <-r.countdown:
+			r.lock.Lock()
+			r.broadcast(fmt.Sprintf("c glob %d", remains))
 			r.lock.Unlock()
 
 		case msg := <-r.receive:
@@ -159,7 +167,7 @@ func (r *Race) run() {
 }
 
 func (r *Race) broadcast(message string) {
-	log.Println("DEBUG broadcasting message: " + message)
+	log.Println("DEBUG broadcasting: " + message)
 	for conn := range r.players {
 		conn.send <- message
 	}
@@ -201,11 +209,24 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 		start_time := time.Now().Add(countdown_period)
 		r.start_time = &start_time
 
-		log.Printf("INFO race %s set start time to %s", r.Race_code, r.start_time.Format("15:04:05.000"))
+		go func() {
+			to_start := r.start_time.Sub(time.Now()) / time.Millisecond
+			remaining := int(to_start) / 1000
+			round := int(to_start) % 1000
+			<-time.After(time.Millisecond * time.Duration(round))
+
+			for i := remaining; i > 0; i-- {
+				r.countdown <- i
+				time.Sleep(time.Second)
+			}
+		}()
+
 		go func() {
 			<-time.After(start_time.Sub(time.Now()))
-			r.countdown <- true
+			r.start_it <- true
 		}()
+
+		log.Printf("INFO race %s set start time to %s", r.Race_code, r.start_time.Format("15:04:05.000"))
 	} else {
 		// do not allow any more player joins if there is
 		// not enough time

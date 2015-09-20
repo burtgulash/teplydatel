@@ -127,6 +127,8 @@ window.onload = function () {
             progress.errors = +args[1];
             progress.wpm = +args[2];
             updateStandings();
+        } else if (cmd == "c") {
+            statusBox.text(+args[0] + "s remain...");
         } else if (cmd == "f") {
             player.finished = true;
             console.log("player", player_id, "finished!!");
@@ -138,7 +140,7 @@ window.onload = function () {
         }
 
         // DEBUG
-        // console.log("message received: ", event.data);
+        console.log("message received: ", event.data);
     }
 
     if (window["WebSocket"]) {
