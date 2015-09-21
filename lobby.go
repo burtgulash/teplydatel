@@ -13,13 +13,16 @@ import (
 const (
 	letters        = "abcdefghijklmnopqrstuvwxyz0123456789"
 	race_code_size = 7
+	anonymous_name = "anonym"
 )
 
 type Lobby struct {
 	texts []*string
 
-	players map[*Player]bool
-	races   map[string]*Race
+	player_counter   int
+	players          map[int]*Player
+	players_name_idx map[string]*Player
+	races            map[string]*Race
 
 	players_lock sync.Mutex
 	races_lock   sync.Mutex
@@ -33,9 +36,10 @@ func NewLobby(texts_file string) *Lobby {
 	}
 
 	l := Lobby{
-		players: make(map[*Player]bool),
-		races:   make(map[string]*Race),
-		texts:   make([]*string, 0),
+		players:          make(map[int]*Player),
+		players_name_idx: make(map[string]*Player),
+		races:            make(map[string]*Race),
+		texts:            make([]*string, 0),
 	}
 
 	reader := bufio.NewReader(f)
@@ -107,4 +111,54 @@ func (l *Lobby) find_match_to_join() *Race {
 	}
 
 	return nil
+}
+
+func (l *Lobby) player_register(name string) *Player {
+	l.players_lock.Lock()
+	defer l.players_lock.Unlock()
+
+	name = strings.Replace(name, " ", "_", -1)
+
+	_, exists := l.players_name_idx[name]
+	if exists || name == anonymous_name {
+		return nil
+	}
+
+	l.player_counter++
+	p := &Player{
+		player_id: l.player_counter,
+		name:      name,
+	}
+
+	l.players[p.player_id] = p
+	l.players_name_idx[name] = p
+
+	return p
+}
+
+func (l *Lobby) anonymous_register() *Player {
+	l.players_lock.Lock()
+	defer l.players_lock.Unlock()
+
+	l.player_counter++
+	p := &Player{
+		player_id: l.player_counter,
+		name:      anonymous_name,
+	}
+
+	l.players[p.player_id] = p
+
+	return p
+}
+
+func (l *Lobby) player_sign_in(player_id int, name string) *Player {
+	l.players_lock.Lock()
+	defer l.players_lock.Unlock()
+
+	p, ok := l.players[player_id]
+	if !ok || p.name != name {
+		return nil
+	}
+
+	return p
 }
