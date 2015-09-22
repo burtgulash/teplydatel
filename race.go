@@ -156,7 +156,7 @@ func (r *Race) run() {
 			} else if msg.data == "disconnect" {
 				pp.conn.close()
 				delete(r.players, pp.conn)
-				log.Printf("INFO player %s left race %s", pp.player.name, r.Race_code)
+				log.Printf("INFO player %d left race %s", pp.player.player_id, r.Race_code)
 				r.broadcast(fmt.Sprintf("d %d", pp.player.player_id))
 
 			}
@@ -238,8 +238,9 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 	}
 
 	r.players[pp.conn] = pp
-	r.broadcast(fmt.Sprintf("j %d %s", player.player_id, player.name))
-	log.Printf("INFO player %s joined race %s", player.name, r.Race_code)
+	// TODO remove 2x player_id
+	r.broadcast(fmt.Sprintf("j %d %d", player.player_id, player.player_id))
+	log.Printf("INFO player %d joined race %s", player.player_id, r.Race_code)
 
 	return conn, nil
 }

@@ -19,10 +19,9 @@ const (
 type Lobby struct {
 	texts []*string
 
-	player_counter   int
-	players          map[int]*Player
-	players_name_idx map[string]*Player
-	races            map[string]*Race
+	player_counter int
+	players        map[int]*Player
+	races          map[string]*Race
 
 	players_lock sync.Mutex
 	races_lock   sync.Mutex
@@ -36,10 +35,9 @@ func NewLobby(texts_file string) *Lobby {
 	}
 
 	l := Lobby{
-		players:          make(map[int]*Player),
-		players_name_idx: make(map[string]*Player),
-		races:            make(map[string]*Race),
-		texts:            make([]*string, 0),
+		players: make(map[int]*Player),
+		races:   make(map[string]*Race),
+		texts:   make([]*string, 0),
 	}
 
 	reader := bufio.NewReader(f)
@@ -113,50 +111,22 @@ func (l *Lobby) find_match_to_join() *Race {
 	return nil
 }
 
-func (l *Lobby) player_register(name string) *Player {
-	l.players_lock.Lock()
-	defer l.players_lock.Unlock()
-
-	name = strings.Replace(name, " ", "_", -1)
-
-	_, exists := l.players_name_idx[name]
-	if exists || name == anonymous_name {
-		return nil
-	}
-
-	l.player_counter++
-	p := &Player{
-		player_id: l.player_counter,
-		name:      name,
-	}
-
-	l.players[p.player_id] = p
-	l.players_name_idx[name] = p
-
-	return p
-}
-
-func (l *Lobby) anonymous_register() *Player {
+func (l *Lobby) player_register() *Player {
 	l.players_lock.Lock()
 	defer l.players_lock.Unlock()
 
 	l.player_counter++
-	p := &Player{
-		player_id: l.player_counter,
-		name:      anonymous_name,
-	}
-
+	p := &Player{player_id: l.player_counter}
 	l.players[p.player_id] = p
-
 	return p
 }
 
-func (l *Lobby) player_sign_in(player_id int, name string) *Player {
+func (l *Lobby) player_sign_in(player_id int) *Player {
 	l.players_lock.Lock()
 	defer l.players_lock.Unlock()
 
 	p, ok := l.players[player_id]
-	if !ok || p.name != name {
+	if !ok {
 		return nil
 	}
 
