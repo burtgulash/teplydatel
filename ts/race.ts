@@ -64,10 +64,11 @@ window.onload = function () {
     }
 
     function updateStandings() {
-        var standings = $("ul#standings");
-        standings.html("");
+        var standings = [];
+
         for (var player_id in race.players) {
-            var progress = race.players[player_id].progress;
+            var player_status = race.players[player_id];
+            var progress = player_status.progress;
             var pg;
             if (progress.done == race.len)
                 pg = "hotovo!";
@@ -79,18 +80,42 @@ window.onload = function () {
             var accuracy = Math.min(race.len, progress.errors) / (progress.done + 1);
             accuracy = Math.round(100 * (1 - accuracy));
 
+            standings.push({
+                accuracy: accuracy,
+                wpm: progress.wpm,
+                player_id: player_id,
+                finished: player_status.finished,
+                rank: player_status.rank,
+                progress: pg
+            });
+        }
+        console.log(standings);
+
+        standings.sort(function(a, b) {
+            if (!a.finished && !b.finished)
+                return a.player_id.localeCompare(b.player_id);
+            if (!a.finished)
+                return 1;
+            if (!b.finished)
+                return -1;
+            return a.rank - b.rank;
+        });
+
+        var standings_elem = $("ul#standings");
+        standings_elem.html("");
+        for (var i = 0; i < standings.length; i++) {
+            var s = standings[i];
             var text = "<li>";
-            text += "Hráč " + player_id +
-                    ": " + pg +
-                    ", přesnost: " + accuracy + "%" +
-                    ", wpm: " + progress.wpm
+            text += "Hráč " + s.player_id +
+                    ": " + s.progress +
+                    ", přesnost: " + s.accuracy + "%" +
+                    ", wpm: " + s.wpm;
 
-            if (progress.finished)
-                text += ", pořadí: " + progress.rank + "."
-
+            if (s.finished)
+                text += ", pořadí: " + s.rank + ".";
             text += "</li>";
 
-            standings.append(text);
+            standings_elem.append(text);
         }
     }
 
@@ -141,7 +166,8 @@ window.onload = function () {
         } else if (cmd == "f") {
             player.finished = true;
             player.rank = +args[0];
-            console.log("player", player_id, "dokončil!!");
+            console.log("player", player_id, "finished jako", player.rank);
+            updateStandings();
         } else if (cmd == "d") {
             console.log("player", player_id, "odpojen");
             player.connected = false;
