@@ -79,11 +79,18 @@ window.onload = function () {
             var accuracy = Math.min(race.len, progress.errors) / (progress.done + 1);
             accuracy = Math.round(100 * (1 - accuracy));
 
-            standings.append("<li>Hráč " + player_id +
+            var text = "<li>";
+            text += "Hráč " + player_id +
                     ": " + pg +
                     ", přesnost: " + accuracy + "%" +
-                    ", wpm: " + progress.wpm + 
-                    "</li>");
+                    ", wpm: " + progress.wpm
+
+            if (progress.finished)
+                text += ", pořadí: " + progress.rank + "."
+
+            text += "</li>";
+
+            standings.append(text);
         }
     }
 
@@ -115,6 +122,7 @@ window.onload = function () {
                 name: args[0],
                 connected: true,
                 finished: false,
+                rank: null,
                 progress: {
                     done: 0,
                     errors: 0,
@@ -132,6 +140,7 @@ window.onload = function () {
             statusBox.text(+args[0] + "s zbývá...");
         } else if (cmd == "f") {
             player.finished = true;
+            player.rank = +args[0];
             console.log("player", player_id, "dokončil!!");
         } else if (cmd == "d") {
             console.log("player", player_id, "odpojen");

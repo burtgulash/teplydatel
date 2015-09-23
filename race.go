@@ -35,6 +35,7 @@ type PlayerProgress struct {
 	conn   *connection
 	player *Player
 	race   *Race
+	rank   int
 
 	done       int
 	errors     int
@@ -78,6 +79,7 @@ type Race struct {
 	race_text    []rune
 	Race_string  *string
 	lobby        *Lobby
+	next_rank    int
 
 	players map[*connection]*PlayerProgress
 	lock    sync.Mutex
@@ -95,6 +97,7 @@ func NewRace(lobby *Lobby, race_code string) *Race {
 		receive:   make(chan RaceMessage, 16),
 		countdown: make(chan int),
 		start_it:  make(chan bool, 1),
+		next_rank: 1,
 	}
 }
 
@@ -153,6 +156,10 @@ func (r *Race) run() {
 
 				r.handle_progress(pp, num_errors, []rune(m[2]))
 
+				if pp.done == len(r.race_text) {
+					r.handle_finished(pp)
+				}
+
 			} else if msg.data == "disconnect" {
 				pp.conn.close()
 				delete(r.players, pp.conn)
@@ -184,10 +191,12 @@ func (r *Race) handle_progress(pp *PlayerProgress, num_errors int, msg []rune) {
 	}
 
 	r.broadcast(fmt.Sprintf("r %d %d %d %.2f", pp.player.Player_id, pp.done, pp.errors, pp.currentWpm))
+}
 
-	if pp.done == len(text) {
-		r.broadcast(fmt.Sprintf("f %d", pp.player.Player_id))
-	}
+func (r *Race) handle_finished(pp *PlayerProgress) {
+	pp.rank = r.next_rank
+	r.broadcast(fmt.Sprintf("f %d %d", pp.player.Player_id, pp.rank))
+	r.next_rank++
 }
 
 func notification_player_joined(player *Player) string {
