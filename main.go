@@ -26,6 +26,9 @@ type Config struct {
 	Website struct {
 		Templates string
 	}
+	Race struct {
+		CountdownSeconds int
+	}
 }
 
 func main() {
@@ -44,7 +47,7 @@ func main() {
 		log.Fatalf("can't load templates: %s", err)
 	}
 
-	lobby := NewLobby(cfg.Texts.File)
+	lobby := NewLobby(cfg.Texts.File, cfg.Race.CountdownSeconds)
 
 	r := pat.New()
 	r.Get("/ws/{race_code}", lobby.ws_handler)

@@ -12,10 +12,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-const (
-	countdown_period = time.Second * 6
-)
-
 var (
 	progress_rx = regexp.MustCompile("(\\d+) (.*)")
 )
@@ -71,15 +67,16 @@ func wpm(num_characters int, period time.Duration) float64 {
 }
 
 type Race struct {
-	race_id      int64
-	Race_code    string
-	status       string
-	created_time *time.Time
-	start_time   *time.Time
-	race_text    []rune
-	Race_string  *string
-	lobby        *Lobby
-	next_rank    int
+	race_id          int64
+	Race_code        string
+	status           string
+	created_time     *time.Time
+	start_time       *time.Time
+	race_text        []rune
+	Race_string      *string
+	lobby            *Lobby
+	next_rank        int
+	countdown_period time.Duration
 
 	players map[*connection]*PlayerProgress
 	lock    sync.Mutex
@@ -89,15 +86,16 @@ type Race struct {
 	start_it  chan bool
 }
 
-func NewRace(lobby *Lobby, race_code string) *Race {
+func NewRace(lobby *Lobby, race_code string, countdown_seconds int) *Race {
 	return &Race{
-		lobby:     lobby,
-		Race_code: race_code,
-		players:   make(map[*connection]*PlayerProgress),
-		receive:   make(chan RaceMessage, 16),
-		countdown: make(chan int),
-		start_it:  make(chan bool, 1),
-		next_rank: 1,
+		lobby:            lobby,
+		Race_code:        race_code,
+		players:          make(map[*connection]*PlayerProgress),
+		receive:          make(chan RaceMessage, 16),
+		countdown:        make(chan int),
+		start_it:         make(chan bool, 1),
+		next_rank:        1,
+		countdown_period: time.Second * time.Duration(countdown_seconds),
 	}
 }
 
@@ -219,7 +217,7 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 
 	if len(r.players) == 0 {
 	} else if r.start_time == nil {
-		start_time := time.Now().Add(countdown_period)
+		start_time := time.Now().Add(r.countdown_period)
 		r.start_time = &start_time
 
 		go func() {

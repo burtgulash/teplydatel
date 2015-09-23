@@ -19,15 +19,16 @@ const (
 type Lobby struct {
 	texts []*string
 
-	player_counter int
-	players        map[int]*Player
-	races          map[string]*Race
+	player_counter    int
+	players           map[int]*Player
+	races             map[string]*Race
+	countdown_seconds int
 
 	players_lock sync.Mutex
 	races_lock   sync.Mutex
 }
 
-func NewLobby(texts_file string) *Lobby {
+func NewLobby(texts_file string, countdown_seconds int) *Lobby {
 	f, err := os.Open(texts_file)
 	defer f.Close()
 	if err != nil {
@@ -35,9 +36,10 @@ func NewLobby(texts_file string) *Lobby {
 	}
 
 	l := Lobby{
-		players: make(map[int]*Player),
-		races:   make(map[string]*Race),
-		texts:   make([]*string, 0),
+		players:           make(map[int]*Player),
+		races:             make(map[string]*Race),
+		texts:             make([]*string, 0),
+		countdown_seconds: countdown_seconds,
 	}
 
 	reader := bufio.NewReader(f)
@@ -76,7 +78,7 @@ func (l *Lobby) create_race() *Race {
 		}
 	}
 
-	race := NewRace(l, race_code)
+	race := NewRace(l, race_code, l.countdown_seconds)
 	text := *l.texts[rand.Intn(len(l.texts))]
 	race.Race_string = &text
 	race.race_text = []rune(text)
