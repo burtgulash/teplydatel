@@ -57,7 +57,7 @@ func set_auth_cookie(w http.ResponseWriter, player *Player) error {
 }
 
 func (l *Lobby) lobby_handler(w http.ResponseWriter, r *http.Request) {
-	templates.ExecuteTemplate(w, "index.html", struct{ Name string }{"John"})
+	templates.ExecuteTemplate(w, "index.html", nil)
 }
 
 func (l *Lobby) race_creator_handler(w http.ResponseWriter, r *http.Request) {
