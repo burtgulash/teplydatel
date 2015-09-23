@@ -121,6 +121,7 @@ window.onload = function () {
                     wpm: 0
                 }
             };
+            updateStandings();
         } else if (cmd == "r") {
             var progress = player.progress;
             progress.done = +args[0];

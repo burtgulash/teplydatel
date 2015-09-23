@@ -40,7 +40,7 @@ func decode_cookie(cookie *http.Cookie, cookie_name string) map[string]int {
 
 func set_auth_cookie(w http.ResponseWriter, player *Player) error {
 	value := map[string]int{
-		"player_id": player.player_id,
+		"player_id": player.Player_id,
 	}
 	encoded, err := secure_cooker.Encode("auth", value)
 	if err != nil {
@@ -113,9 +113,13 @@ func (l *Lobby) race_handler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	log.Println("PLAYEA", player)
-
-	templates.ExecuteTemplate(w, "race.html", race)
+	templates.ExecuteTemplate(w, "race.html", struct {
+		Race   *Race
+		Player *Player
+	}{
+		race,
+		player,
+	})
 }
 
 func (l *Lobby) ws_handler(w http.ResponseWriter, r *http.Request) {

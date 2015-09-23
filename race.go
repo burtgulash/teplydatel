@@ -156,8 +156,8 @@ func (r *Race) run() {
 			} else if msg.data == "disconnect" {
 				pp.conn.close()
 				delete(r.players, pp.conn)
-				log.Printf("INFO player %d left race %s", pp.player.player_id, r.Race_code)
-				r.broadcast(fmt.Sprintf("d %d", pp.player.player_id))
+				log.Printf("INFO player %d left race %s", pp.player.Player_id, r.Race_code)
+				r.broadcast(fmt.Sprintf("d %d", pp.player.Player_id))
 
 			}
 			r.lock.Unlock()
@@ -183,15 +183,15 @@ func (r *Race) handle_progress(pp *PlayerProgress, num_errors int, msg []rune) {
 		// not matching, what do?
 	}
 
-	r.broadcast(fmt.Sprintf("r %d %d %d %.2f", pp.player.player_id, pp.done, pp.errors, pp.currentWpm))
+	r.broadcast(fmt.Sprintf("r %d %d %d %.2f", pp.player.Player_id, pp.done, pp.errors, pp.currentWpm))
 
 	if pp.done == len(text) {
-		r.broadcast(fmt.Sprintf("f %d", pp.player.player_id))
+		r.broadcast(fmt.Sprintf("f %d", pp.player.Player_id))
 	}
 }
 
 func notification_player_joined(player *Player) string {
-	return fmt.Sprintf("j %d %d", player.player_id, player.player_id)
+	return fmt.Sprintf("j %d %d", player.Player_id, player.Player_id)
 }
 
 func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
@@ -247,9 +247,9 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 	}
 
 	r.players[pp.conn] = pp
-	// TODO remove 2x player_id
+	// TODO remove 2x Player_id
 	r.broadcast(notification_player_joined(player))
-	log.Printf("INFO player %d joined race %s", player.player_id, r.Race_code)
+	log.Printf("INFO player %d joined race %s", player.Player_id, r.Race_code)
 
 	return conn, nil
 }

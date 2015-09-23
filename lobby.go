@@ -116,8 +116,8 @@ func (l *Lobby) player_register() *Player {
 	defer l.players_lock.Unlock()
 
 	l.player_counter++
-	p := &Player{player_id: l.player_counter}
-	l.players[p.player_id] = p
+	p := &Player{Player_id: l.player_counter}
+	l.players[p.Player_id] = p
 	return p
 }
 
