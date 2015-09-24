@@ -189,6 +189,10 @@ window.onload = function () {
     }
 
     if (window["WebSocket"]) {
+        $(document).keydown(function(event) {
+            if (event.which == 8)
+                event.preventDefault();
+        });
         var parser = document.createElement("a");
         parser.href = window.location.href;
 
@@ -198,7 +202,6 @@ window.onload = function () {
         var ws_uri = "ws://" + parser.host + "/ws/" + race_code;
         statusBox.text("connecting...");
         console.log("connecting to", ws_uri);
-
 
         conn = new WebSocket(ws_uri);
         conn.onopen = function(event) {

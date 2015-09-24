@@ -146,23 +146,7 @@ func (r *Race) run() {
 			pp := r.players[msg.conn]
 
 			if msg.data[0] == 'p' {
-				m := progress_rx.FindStringSubmatch(msg.data[2:])
-
-				num_errors, err := strconv.Atoi(m[1])
-				if err != nil {
-					break
-				}
-
-				r.handle_progress(pp, num_errors, []rune(m[2]))
-
-				if pp.done == len(r.race_text) {
-					if !pp.finished {
-						pp.finished = true
-						r.handle_finished(pp)
-					} else {
-						log.Printf("WARNING player finished more than once!. {player=%d}", pp.player.Player_id)
-					}
-				}
+				r.handle_progress(pp, msg.data)
 
 			} else if msg.data == "disconnect" {
 				pp.conn.close()
@@ -184,7 +168,31 @@ func (r *Race) broadcast(message string) {
 	}
 }
 
-func (r *Race) handle_progress(pp *PlayerProgress, num_errors int, msg []rune) {
+func (r *Race) handle_progress(pp *PlayerProgress, msg string) {
+	if pp.finished {
+		log.Printf("WARNING player already finished, but progress received. {player=%d, race=%s}", pp.player.Player_id, r.Race_code)
+		return
+	}
+	m := progress_rx.FindStringSubmatch(msg[2:])
+
+	num_errors, err := strconv.Atoi(m[1])
+	if err != nil {
+		return
+	}
+
+	r.progress(pp, num_errors, []rune(m[2]))
+
+	if pp.done == len(r.race_text) {
+		if !pp.finished {
+			pp.finished = true
+			r.handle_finished(pp)
+		} else {
+			log.Printf("WARNING player finished more than once!. {player=%d}", pp.player.Player_id)
+		}
+	}
+}
+
+func (r *Race) progress(pp *PlayerProgress, num_errors int, msg []rune) {
 	text := r.race_text
 	length := len(msg)
 
