@@ -86,7 +86,8 @@ window.onload = function () {
                 player_id: player_id,
                 finished: player_status.finished,
                 rank: player_status.rank,
-                progress: pg
+                progress: ""+pg,
+                connected: player_status.connected
             });
         }
         console.log(standings);
@@ -106,13 +107,15 @@ window.onload = function () {
         for (var i = 0; i < standings.length; i++) {
             var s = standings[i];
             var text = "<li>";
-            text += "Hráč " + s.player_id +
-                    ": " + s.progress +
-                    ", přesnost: " + s.accuracy + "%" +
-                    ", wpm: " + s.wpm;
+            text += "Hráč " + s.player_id + ": ";
+            text += s.progress;
+            text += ", přesnost: " + s.accuracy + "%";
+            text += ", wpm: " + s.wpm;
 
             if (s.finished)
                 text += ", pořadí: " + s.rank + ".";
+            else if (!s.connected)
+                text += ", nedokončil";
             text += "</li>";
 
             standings_elem.append(text);
@@ -140,7 +143,6 @@ window.onload = function () {
                 $(document).keypress(onkeypress).keydown(onkeydown);
             }
             statusBox.text("Piš!");
-            updateStandings();
         } else if (cmd == "j") {
             race.players[player_id] = {
                 id: player_id,
@@ -154,20 +156,17 @@ window.onload = function () {
                     wpm: 0
                 }
             };
-            updateStandings();
         } else if (cmd == "r") {
             var progress = player.progress;
             progress.done = +args[0];
             progress.errors = +args[1];
             progress.wpm = +args[2];
-            updateStandings();
         } else if (cmd == "c") {
             statusBox.text(+args[0] + "s zbývá...");
         } else if (cmd == "f") {
             player.finished = true;
             player.rank = +args[0];
             console.log("player", player_id, "finished jako", player.rank);
-            updateStandings();
         } else if (cmd == "d") {
             console.log("player", player_id, "odpojen");
             player.connected = false;
@@ -175,6 +174,7 @@ window.onload = function () {
             console.log("unknown command", cmd);
         }
 
+        updateStandings();
         // DEBUG
         //console.log("message received: ", event.data);
     }
