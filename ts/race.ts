@@ -79,6 +79,8 @@ window.onload = function () {
             error_arr.pop();
             error.text(error_arr.join(""));
             remaining.text(after_cursor.slice(error_arr.length).join(""));
+        } else if (event.which == 32) {
+            onkeypress(event);
         }
     }
 
@@ -142,7 +144,8 @@ window.onload = function () {
     }
 
     function start_race() {
-        $(document).keypress(onkeypress).keydown(onkeydown);
+        $(".fields").focus();
+        $(".fields").keypress(onkeypress).keydown(onkeydown);
         statusBox.text("Piš!");
         notifyTimeout = setTimeout(notifyProgress, 3 * 1000);
     }
@@ -201,9 +204,14 @@ window.onload = function () {
     }
 
     if (window["WebSocket"]) {
+        // disable default behaviour for some keys
         $(document).keydown(function(event) {
-            if (event.which == 8)
+            // 8 = backspace
+            // 32 = space
+            if (event.which == 8 || event.which == 32) {
+                console.log("kokot"  + event.which);
                 event.preventDefault();
+            }
         });
         var parser = document.createElement("a");
         parser.href = window.location.href;

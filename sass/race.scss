@@ -1,25 +1,27 @@
 @import "main";
 
-.fields span {
-    white-space: pre-wrap;
-}
+.fields {
+    outline: none !important;
 
-body {
-    font-family: monospace;
-}
+    span {
+        white-space: pre-wrap;
+        font-size: 1.5em;
+        display: inline;
+    }
 
-#done {
-    color: #777;
-}
+    #done {
+        color: #777;
+    }
 
-#error {
-    color: red;
-    word-wrap: break-word;
-}
+    #cursor {
+        border-right: 1px solid #555;
+        animation: blink 1s steps(1) infinite;
+    }
 
-#cursor {
-    border-right: 1px solid #555;
-    animation: blink 1s steps(1) infinite;
+    #error {
+        color: red;
+        word-wrap: break-word;
+    }
 }
 
 @keyframes blink {
