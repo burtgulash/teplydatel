@@ -90,7 +90,6 @@ window.onload = function () {
                 connected: player_status.connected
             });
         }
-        console.log(standings);
 
         standings.sort(function(a, b) {
             if (!a.finished && !b.finished)
@@ -166,9 +165,7 @@ window.onload = function () {
         } else if (cmd == "f") {
             player.finished = true;
             player.rank = +args[0];
-            console.log("player", player_id, "finished jako", player.rank);
         } else if (cmd == "d") {
-            console.log("player", player_id, "odpojen");
             player.connected = false;
         } else {
             console.log("unknown command", cmd);
