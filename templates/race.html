@@ -9,15 +9,15 @@
     <body>
         <h1>Závod</h1>
         <a href="/">lobby</a>
-        <div class="fields">
-            <span id="done"></span><span id="error"></span><span id="cursor"></span><span id="remaining">{{.Race.Race_string}}</span>
-        </div>
         <div id="race">
             <h3>status</h3>
             <div id="status"></div>
             <h3>hráči</h3>
             <div>jsi hráč {{.Player.Player_id}}</div>
             <ul id="standings"></ul>
+        </div>
+        <div class="fields">
+            <span id="done"></span><span id="error"></span><span id="cursor"></span><span id="remaining">{{.Race.Race_string}}</span>
         </div>
     </body>
 </html>
