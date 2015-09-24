@@ -7,7 +7,7 @@ clean() {
 
 echo 1. sass compile
 clean "css"
-sass --scss ./sass/*.scss > ./css/style.css
+sass --scss sass/race.scss > css/style.css
 
 echo 2. typescript compile
 clean "js"
