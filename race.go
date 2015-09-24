@@ -105,7 +105,7 @@ func (r *Race) set_status(status string) {
 	old_status := r.status
 	r.status = status
 	r.broadcast(fmt.Sprintf("s glob %s", status))
-	log.Printf("INFO race %s changed status %s -> %s", r.Race_code, old_status, status)
+	log.Printf("INFO race changed status %s -> %s {race=%s}", old_status, status, r.Race_code)
 }
 
 func rune_equals(a, b []rune) bool {
@@ -127,8 +127,6 @@ func (r *Race) run() {
 		select {
 
 		case <-r.start_it:
-			log.Printf("INFO race %s started!", r.Race_code)
-
 			r.lock.Lock()
 			r.set_status("live")
 			now := time.Now()
@@ -163,7 +161,7 @@ func (r *Race) run() {
 			} else if msg.data == "disconnect" {
 				pp.conn.close()
 				delete(r.players, pp.conn)
-				log.Printf("INFO player %d left race %s", pp.player.Player_id, r.Race_code)
+				log.Printf("INFO playerleft race {player=%d, race=%s}", pp.player.Player_id, r.Race_code)
 				r.broadcast(fmt.Sprintf("d %d", pp.player.Player_id))
 
 			}
@@ -242,12 +240,12 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 	if r.is_practice_race {
 		// TODO change countdown period for practice races
 		r.start_countdown(r.countdown_period)
-		log.Printf("INFO practice race %s set start time to %s", r.Race_code, r.start_time.Format("15:04:05.000"))
+		log.Printf("INFO practice race set start time to %s. {race=%s}", r.start_time.Format("15:04:05.000"), r.Race_code)
 	} else if len(r.players) == 0 {
 		// wait for other players to join
 	} else if r.start_time == nil {
 		r.start_countdown(r.countdown_period)
-		log.Printf("INFO race %s set start time to %s", r.Race_code, r.start_time.Format("15:04:05.000"))
+		log.Printf("INFO race set start time to %s. {race=%s}", r.start_time.Format("15:04:05.000"), r.Race_code)
 	} else {
 		// do not allow any more player joins if there is
 		// not enough time
@@ -266,7 +264,7 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 	r.players[pp.conn] = pp
 	// TODO remove 2x Player_id
 	r.broadcast(notification_player_joined(player))
-	log.Printf("INFO player %d joined race %s", player.Player_id, r.Race_code)
+	log.Printf("INFO player joined race. {player=%d, race=%s}", player.Player_id, r.Race_code)
 
 	return conn, nil
 }
