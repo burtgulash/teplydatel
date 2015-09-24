@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/pat"
@@ -21,10 +22,9 @@ type Config struct {
 		File string
 	}
 	Server struct {
-		Address string
-	}
-	Website struct {
+		Address   string
 		Templates string
+		Static    []string
 	}
 	Race struct {
 		CountdownSeconds int
@@ -42,7 +42,7 @@ func main() {
 	}
 
 	addr := cfg.Server.Address
-	templates, err = template.ParseGlob(cfg.Website.Templates + "/*")
+	templates, err = template.ParseGlob(cfg.Server.Templates + "/*")
 	if err != nil {
 		log.Fatalf("can't load templates: %s", err)
 	}
@@ -55,9 +55,15 @@ func main() {
 	r.Get("/zavod", lobby.race_creator_handler)
 	r.Get("/", lobby.lobby_handler)
 
-	js := http.FileServer(http.Dir("js"))
+	// get all static directories fro config and create fileserver
+	// for each
+	for _, s := range cfg.Server.Static {
+		s = strings.Trim(s, "/")
+		fileserver := http.FileServer(http.Dir(s))
+		s = "/" + s + "/"
+		http.Handle(s, http.StripPrefix(s, fileserver))
+	}
 
-	http.Handle("/js/", http.StripPrefix("/js/", js))
 	http.Handle("/", r)
 
 	log.Println("INFO serving on", addr)
