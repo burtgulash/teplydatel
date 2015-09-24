@@ -31,7 +31,7 @@ window.onload = function () {
         error_counter = 0;
 
         if (after_cursor.length > 0)
-            setTimeout(notifyProgress, 3 * 1000);
+            notifyTimeout = setTimeout(notifyProgress, 3 * 1000);
     }
 
     function onkeypress(event) {
