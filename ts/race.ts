@@ -100,7 +100,7 @@ window.onload = function () {
 
             var error_rate = progress.errors/(progress.done + 1);
             error_rate = Math.min(1, error_rate);
-            var accuracy = Math.round(100 * (1 - error_rate));
+            var accuracy = Math.floor(100 * (1 - error_rate));
 
             standings.push({
                 accuracy: accuracy,
