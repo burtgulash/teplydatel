@@ -67,10 +67,12 @@ func (l *Lobby) race_creator_handler(w http.ResponseWriter, r *http.Request) {
 	if race_type == "verejny" {
 		race = l.find_match_to_join()
 		if race == nil {
-			race = l.create_race()
+			race = l.create_race(false)
 		}
 	} else if race_type == "soukromy" {
-		race = l.create_race()
+		race = l.create_race(false)
+	} else if race_type == "trenink" {
+		race = l.create_race(true)
 	} else {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return

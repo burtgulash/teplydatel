@@ -77,6 +77,7 @@ type Race struct {
 	lobby            *Lobby
 	next_rank        int
 	countdown_period time.Duration
+	is_practice_race bool
 
 	players map[*connection]*PlayerProgress
 	lock    sync.Mutex
@@ -86,7 +87,7 @@ type Race struct {
 	start_it  chan bool
 }
 
-func NewRace(lobby *Lobby, race_code string, countdown_seconds int) *Race {
+func NewRace(lobby *Lobby, race_code string, countdown_seconds int, practice bool) *Race {
 	return &Race{
 		lobby:            lobby,
 		Race_code:        race_code,
@@ -96,6 +97,7 @@ func NewRace(lobby *Lobby, race_code string, countdown_seconds int) *Race {
 		start_it:         make(chan bool, 1),
 		next_rank:        1,
 		countdown_period: time.Second * time.Duration(countdown_seconds),
+		is_practice_race: practice,
 	}
 }
 
@@ -201,6 +203,28 @@ func notification_player_joined(player *Player) string {
 	return fmt.Sprintf("j %d %d", player.Player_id, player.Player_id)
 }
 
+func (r *Race) start_countdown(countdown_period time.Duration) {
+	start_time := time.Now().Add(r.countdown_period)
+	r.start_time = &start_time
+
+	go func() {
+		to_start := r.start_time.Sub(time.Now()) / time.Millisecond
+		remaining := int(to_start) / 1000
+		round := int(to_start) % 1000
+		<-time.After(time.Millisecond * time.Duration(round))
+
+		for i := remaining; i > 0; i-- {
+			r.countdown <- i
+			time.Sleep(time.Second)
+		}
+	}()
+
+	go func() {
+		<-time.After(start_time.Sub(time.Now()))
+		r.start_it <- true
+	}()
+}
+
 func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
@@ -215,28 +239,14 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 		currentWpm: 0.0,
 	}
 
-	if len(r.players) == 0 {
+	if r.is_practice_race {
+		// TODO change countdown period for practice races
+		r.start_countdown(r.countdown_period)
+		log.Printf("INFO practice race %s set start time to %s", r.Race_code, r.start_time.Format("15:04:05.000"))
+	} else if len(r.players) == 0 {
+		// wait for other players to join
 	} else if r.start_time == nil {
-		start_time := time.Now().Add(r.countdown_period)
-		r.start_time = &start_time
-
-		go func() {
-			to_start := r.start_time.Sub(time.Now()) / time.Millisecond
-			remaining := int(to_start) / 1000
-			round := int(to_start) % 1000
-			<-time.After(time.Millisecond * time.Duration(round))
-
-			for i := remaining; i > 0; i-- {
-				r.countdown <- i
-				time.Sleep(time.Second)
-			}
-		}()
-
-		go func() {
-			<-time.After(start_time.Sub(time.Now()))
-			r.start_it <- true
-		}()
-
+		r.start_countdown(r.countdown_period)
 		log.Printf("INFO race %s set start time to %s", r.Race_code, r.start_time.Format("15:04:05.000"))
 	} else {
 		// do not allow any more player joins if there is
@@ -259,4 +269,9 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 	log.Printf("INFO player %d joined race %s", player.Player_id, r.Race_code)
 
 	return conn, nil
+}
+
+func (r *Race) join_practice_race(player *Player, ws *websocket.Conn) {
+	r.lock.Lock()
+	defer r.lock.Unlock()
 }

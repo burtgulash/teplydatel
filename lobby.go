@@ -66,7 +66,7 @@ func gen_code(size int) string {
 	return string(b[:])
 }
 
-func (l *Lobby) create_race() *Race {
+func (l *Lobby) create_race(practice bool) *Race {
 	l.races_lock.Lock()
 	defer l.races_lock.Unlock()
 
@@ -78,7 +78,7 @@ func (l *Lobby) create_race() *Race {
 		}
 	}
 
-	race := NewRace(l, race_code, l.countdown_seconds)
+	race := NewRace(l, race_code, l.countdown_seconds, practice)
 	text := *l.texts[rand.Intn(len(l.texts))]
 	race.Race_string = &text
 	race.race_text = []rune(text)
