@@ -12,8 +12,19 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+const (
+	CREATED = iota
+	LIVE
+	CLOSED
+)
+
 var (
 	progress_rx = regexp.MustCompile("(\\d+) (.*)")
+	status_map  = map[int]string{
+		CREATED: "created",
+		LIVE:    "live",
+		CLOSED:  "closed",
+	}
 )
 
 type RaceMessage struct {
@@ -70,7 +81,7 @@ func wpm(num_characters int, period time.Duration) float64 {
 type Race struct {
 	race_id          int64
 	Race_code        string
-	status           string
+	status           int
 	created_time     *time.Time
 	start_time       *time.Time
 	race_text        []rune
@@ -102,11 +113,14 @@ func NewRace(lobby *Lobby, race_code string, countdown_seconds int, practice boo
 	}
 }
 
-func (r *Race) set_status(status string) {
-	old_status := r.status
+func (r *Race) set_status(status int) {
+	old_status := status_map[r.status]
+	new_status := status_map[status]
+
 	r.status = status
-	r.broadcast(fmt.Sprintf("s glob %s", status))
-	log.Printf("INFO race changed status %s -> %s {race=%s}", old_status, status, r.Race_code)
+
+	r.broadcast(fmt.Sprintf("s glob %s", new_status))
+	log.Printf("INFO race changed status %s -> %s {race=%s}", old_status, new_status, r.Race_code)
 }
 
 func rune_equals(a, b []rune) bool {
@@ -122,14 +136,19 @@ func rune_equals(a, b []rune) bool {
 }
 
 func (r *Race) run() {
-	r.set_status("created")
+	r.set_status(CREATED)
 
 	for {
+		if r.status == CLOSED {
+			log.Printf("closing race. {race=%s}", r.Race_code)
+			break
+		}
+
 		select {
 
 		case <-r.start_it:
 			r.lock.Lock()
-			r.set_status("live")
+			r.set_status(LIVE)
 			now := time.Now()
 			for _, pp := range r.players {
 				pp.start(now)
@@ -151,9 +170,13 @@ func (r *Race) run() {
 			} else if msg.data == "disconnect" {
 				pp.conn.close()
 				delete(r.players, pp.conn)
+
 				log.Printf("INFO player left race {player=%d, race=%s}", pp.player.Player_id, r.Race_code)
 				r.broadcast(fmt.Sprintf("d %d", pp.player.Player_id))
 
+				if len(r.players) == 0 {
+					r.set_status(CLOSED)
+				}
 			}
 			r.lock.Unlock()
 
