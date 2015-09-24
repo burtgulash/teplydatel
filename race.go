@@ -28,10 +28,11 @@ type progressItem struct {
 }
 
 type PlayerProgress struct {
-	conn   *connection
-	player *Player
-	race   *Race
-	rank   int
+	conn     *connection
+	player   *Player
+	race     *Race
+	rank     int
+	finished bool
 
 	done       int
 	errors     int
@@ -155,7 +156,12 @@ func (r *Race) run() {
 				r.handle_progress(pp, num_errors, []rune(m[2]))
 
 				if pp.done == len(r.race_text) {
-					r.handle_finished(pp)
+					if !pp.finished {
+						pp.finished = true
+						r.handle_finished(pp)
+					} else {
+						log.Printf("WARNING player finished more than once!. {player=%d}", pp.player.Player_id)
+					}
 				}
 
 			} else if msg.data == "disconnect" {

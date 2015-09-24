@@ -3,6 +3,7 @@
 
 window.onload = function () {
     var conn;
+    var notifyTimeout;
     var race = {
         status: "created",
         len: 0,
@@ -21,6 +22,18 @@ window.onload = function () {
     var after_cursor = remaining.text().split("");
     race.len = after_cursor.length;
 
+    function notifyProgress() {
+        clearTimeout(notifyTimeout);
+
+        conn.send("p " + error_counter +
+                " " + send_buf.join(""));
+        send_buf = [];
+        error_counter = 0;
+
+        if (after_cursor.length > 0)
+            setTimeout(notifyProgress, 3 * 1000);
+    }
+
     function onkeypress(event) {
         var expected = after_cursor[0];
         var c = String.fromCharCode(event.which);
@@ -32,13 +45,8 @@ window.onload = function () {
             // Each 5 successful characters or when 'remaining'
             // buffer depleted, send progress report
             send_buf.push(c);
-            if (send_buf.length >= 5 || after_cursor.length == 0) {
-                conn.send("p " + error_counter +
-                        " " + send_buf.join(""));
-
-                send_buf = [];
-                error_counter = 0;
-            }
+            if (send_buf.length >= 5 || after_cursor.length == 0)
+                notifyProgress();
 
             done.text(before_cursor.join(""));
             remaining.text(after_cursor.join(""));
@@ -121,6 +129,12 @@ window.onload = function () {
         }
     }
 
+    function start_race() {
+        $(document).keypress(onkeypress).keydown(onkeydown);
+        statusBox.text("Piš!");
+        notifyTimeout = setTimeout(notifyProgress, 3 * 1000);
+    }
+
     function onwsmessage(event) {
         var data = event.data.split(" ");
         var cmd = data[0];
@@ -138,10 +152,8 @@ window.onload = function () {
         var args = data.slice(2);
         if (cmd == "s") {
             race.status = args[0];
-            if (race.status == "live") {
-                $(document).keypress(onkeypress).keydown(onkeydown);
-            }
-            statusBox.text("Piš!");
+            if (race.status == "live")
+                start_race();
         } else if (cmd == "j") {
             race.players[player_id] = {
                 id: player_id,
