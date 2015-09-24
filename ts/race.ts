@@ -3,7 +3,10 @@
 
 window.onload = function () {
     var conn;
+
     var notifyTimeout;
+    var lastInput = Date.now();
+
     var race = {
         status: "created",
         len: 0,
@@ -30,11 +33,17 @@ window.onload = function () {
         send_buf = [];
         error_counter = 0;
 
-        if (after_cursor.length > 0)
+        // if there are still characters left to type and there
+        // is some user activity in recent couple of seconds,
+        // send progress to server
+        if (after_cursor.length > 0 &&
+                Date.now() - lastInput <= 10 * 1000)
             notifyTimeout = setTimeout(notifyProgress, 3 * 1000);
     }
 
     function onkeypress(event) {
+        lastInput = Date.now();
+
         var expected = after_cursor[0];
         var c = String.fromCharCode(event.which);
 
@@ -64,6 +73,8 @@ window.onload = function () {
 
     // handle backspace
     function onkeydown(event) {
+        lastInput = Date.now();
+
         if (event.which == 8) {
             error_arr.pop();
             error.text(error_arr.join(""));

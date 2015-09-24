@@ -1,4 +1,5 @@
 *.swp
+.sass-cache
 teplydatel
 js
-.sass-cache
+css

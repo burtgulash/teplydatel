@@ -1,0 +1,25 @@
+.fields span {
+    white-space: pre-wrap;
+}
+
+body {
+    font-family: monospace;
+}
+
+#done {
+    color: #777;
+}
+
+#error {
+    color: red;
+    word-wrap: break-word;
+}
+
+#cursor {
+    border-right: 1px solid #555;
+    animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+    50% {visibility: hidden; }
+}
