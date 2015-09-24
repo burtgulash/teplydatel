@@ -85,8 +85,9 @@ window.onload = function () {
                 pg = p + "%";
             }
 
-            var accuracy = Math.min(race.len, progress.errors) / (progress.done + 1);
-            accuracy = Math.round(100 * (1 - accuracy));
+            var error_rate = progress.errors/(progress.done + 1);
+            error_rate = Math.min(1, error_rate);
+            var accuracy = Math.round(100 * (1 - error_rate));
 
             standings.push({
                 accuracy: accuracy,
