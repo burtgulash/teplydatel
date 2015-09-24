@@ -151,7 +151,7 @@ func (r *Race) run() {
 			} else if msg.data == "disconnect" {
 				pp.conn.close()
 				delete(r.players, pp.conn)
-				log.Printf("INFO playerleft race {player=%d, race=%s}", pp.player.Player_id, r.Race_code)
+				log.Printf("INFO player left race {player=%d, race=%s}", pp.player.Player_id, r.Race_code)
 				r.broadcast(fmt.Sprintf("d %d", pp.player.Player_id))
 
 			}
