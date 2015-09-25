@@ -13,6 +13,9 @@ echo 2. typescript compile
 clean "js"
 tsc ./ts/race.ts --outFile js/race.js
 
-echo 3. go build
+echo 3. go get
+go get
+
+echo 4. go build
 go build
 

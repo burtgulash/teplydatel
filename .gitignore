@@ -1,5 +1,6 @@
 *.swp
 .sass-cache
+sass/*.map
 teplydatel
 js
 css
