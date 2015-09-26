@@ -1,0 +1,8 @@
+{
+  "name": "teplydatel",
+  "private": true,
+  "dependencies": {
+      "d3": "latest",
+      "jquery": "latest"
+  }
+}

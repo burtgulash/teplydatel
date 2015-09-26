@@ -9,6 +9,9 @@ gulp build-css
 echo 3. gulp build-javascript
 gulp build-javascript
 
+echo 4. gulp publish-bower-components
+gulp publish-bower-components
+
 echo 4. go get
 go get
 
