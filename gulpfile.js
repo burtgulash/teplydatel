@@ -37,8 +37,8 @@ gulp.task("build-css", function() {
         .pipe(sourcemaps.init())
         .pipe(sass({outputStyle: "compressed"})
             .on("error", sass.logError))
-        .pipe(sourcemaps.write())
         .pipe(concat("style.css"))
+        .pipe(sourcemaps.write())
         .pipe(rename({suffix: ".min"}))
         .pipe(gulp.dest(dist + "/css"));
 });
@@ -69,8 +69,9 @@ gulp.task('publish-bower-components', function() {
 
         // grab vendor js files from bower_components, minify and push in /public
         .pipe(jsFilter)
-        .pipe(gulp.dest(dist + '/js/'))
+        .pipe(sourcemaps.init())
         .pipe(uglify())
+        .pipe(sourcemaps.write("."))
         .pipe(rename({
             suffix: ".min"
         }))
@@ -79,7 +80,6 @@ gulp.task('publish-bower-components', function() {
 
         // grab vendor css files from bower_components, minify and push in /public
         .pipe(cssFilter)
-        .pipe(gulp.dest(dist + '/css'))
         .pipe(minifycss())
         .pipe(rename({
             suffix: ".min"
