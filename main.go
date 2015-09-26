@@ -39,10 +39,10 @@ func parse_static_location(loc_string string) (string, string, error) {
 		return "", "", fmt.Errorf("correct format = {endpoint} -> {path}. Got: %s", loc_string)
 	}
 
-	from := strings.Trim(sp[0], " /")
+	endpoint := strings.Trim(sp[0], " /")
 	dir := strings.Trim(sp[1], " ")
 
-	return from, dir, nil
+	return "/" + endpoint + "/", dir, nil
 }
 
 func main() {
@@ -52,13 +52,13 @@ func main() {
 	var cfg Config
 	err := gcfg.ReadFileInto(&cfg, *config)
 	if err != nil {
-		log.Fatalf("can't load config %s: %s", err)
+		log.Fatalf("ERROR can't load config %s: %s", err)
 	}
 
 	addr := cfg.Server.Address
 	templates, err := template.ParseGlob(cfg.Server.Templates + "/*")
 	if err != nil {
-		log.Fatalf("can't load templates: %s", err)
+		log.Fatalf("ERROR can't load templates: %s", err)
 	}
 
 	lobby := server.NewLobby(templates, cfg.Texts.File, cfg.Race.CountdownSeconds)
@@ -72,13 +72,14 @@ func main() {
 	// get all static directories from config and create fileserver
 	// for each one of them
 	for _, s := range cfg.Server.Static {
-		from, dir, err := parse_static_location(s)
+		endpoint, dir, err := parse_static_location(s)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("ERROR %s", err)
 		}
 
 		fileserver := http.FileServer(http.Dir(dir))
-		http.Handle("/"+from+"/", http.StripPrefix(s, fileserver))
+		http.Handle(endpoint, http.StripPrefix(endpoint, fileserver))
+		log.Printf("INFO serving static files from %s on %s", dir, endpoint)
 	}
 
 	http.Handle("/", r)
