@@ -1,5 +1,6 @@
 *.swp
 .sass-cache
-sass/*.map
 teplydatel
 public
+node_modules
+bower_components
