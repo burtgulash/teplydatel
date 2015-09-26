@@ -1,32 +1,31 @@
 #!/bin/bash
 
-# Run under root!
-
 echo install golang
-apt-get install npm golang
+sudo apt-get install npm golang
 
 # http://stackoverflow.com/questions/26320901/cannot-install-nodejs-usr-bin-env-node-no-such-file-or-directory
-ln -s /usr/bin/nodejs /usr/bin/node
+sudo ln -s /usr/bin/nodejs /usr/bin/node
 
 echo install typescript, bower, gulp
-npm install -g typescript
-npm install -g bower
-npm install -g gulp
+sudo npm install -g typescript
+sudo npm install -g bower
+sudo npm install -g gulp
 
 
 echo install gulp plugins
-npm install --save-dev main-bower-files
-npm install --save-dev del
-npm install --save-dev gulp
-npm install --save-dev gulp-util
-npm install --save-dev gulp-rename
-npm install --save-dev gulp-concat
-npm install --save-dev gulp-uglify
-npm install --save-dev gulp-sass
-npm install --save-dev gulp-typescript
-npm install --save-dev gulp-sourcemaps
-npm install --save-dev gulp-flatten
-npm install --save-dev gulp-filter
+sudo npm install --save-dev main-bower-files
+sudo npm install --save-dev del
+sudo npm install --save-dev gulp
+sudo npm install --save-dev gulp-util
+sudo npm install --save-dev gulp-rename
+sudo npm install --save-dev gulp-concat
+sudo npm install --save-dev gulp-uglify
+sudo npm install --save-dev gulp-sass
+sudo npm install --save-dev gulp-typescript
+sudo npm install --save-dev gulp-sourcemaps
+sudo npm install --save-dev gulp-flatten
+sudo npm install --save-dev gulp-filter
+sudo npm install --save-dev gulp-minify-css
 
 echo install bower dependencies defined in bower.json
 bower install
