@@ -9,7 +9,9 @@ ln -s /usr/bin/nodejs /usr/bin/node
 
 npm install -g typescript
 npm install -g gulp
+
 npm install --save-dev gulp
 npm install --save-dev gulp-util
+npm install --save-dev gulp-sass
 
 gem install sass
