@@ -209,10 +209,8 @@ window.onload = function () {
         $(document).keydown(function(event) {
             // 8 = backspace
             // 32 = space
-            if (event.which == 8 || event.which == 32) {
-                console.log("kokot"  + event.which);
+            if (event.which == 8 || event.which == 32)
                 event.preventDefault();
-            }
         });
         var parser = document.createElement("a");
         parser.href = window.location.href;
