@@ -120,7 +120,7 @@ func (r *Race) set_status(status int) {
 	r.status = status
 
 	r.broadcast(fmt.Sprintf("s glob %s", new_status))
-	log.Printf("INFO race changed status %s -> %s {race=%s}", old_status, new_status, r.Race_code)
+	log.Printf("INFO race changed status {race=%s, from=%s, to=%s}", r.Race_code, old_status, new_status)
 }
 
 func rune_equals(a, b []rune) bool {
@@ -140,7 +140,7 @@ func (r *Race) run() {
 
 	for {
 		if r.status == CLOSED {
-			log.Printf("closing race. {race=%s}", r.Race_code)
+			log.Printf("closing race {race=%s}", r.Race_code)
 			break
 		}
 
@@ -193,7 +193,7 @@ func (r *Race) broadcast(message string) {
 
 func (r *Race) handle_progress(pp *PlayerProgress, msg string) {
 	if pp.finished {
-		log.Printf("WARNING player already finished, but progress received. {player=%d, race=%s}", pp.player.Player_id, r.Race_code)
+		log.Printf("WARNING player already finished, but progress received {player=%d, race=%s}", pp.player.Player_id, r.Race_code)
 		return
 	}
 	m := progress_rx.FindStringSubmatch(msg[2:])
@@ -210,7 +210,7 @@ func (r *Race) handle_progress(pp *PlayerProgress, msg string) {
 			pp.finished = true
 			r.handle_finished(pp)
 		} else {
-			log.Printf("WARNING player finished more than once!. {player=%d}", pp.player.Player_id)
+			log.Printf("WARNING player finished more than once! {player=%d}", pp.player.Player_id)
 		}
 	}
 }
@@ -277,12 +277,12 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 	if r.is_practice_race {
 		// TODO change countdown period for practice races
 		r.start_countdown(r.countdown_period)
-		log.Printf("INFO practice race set start time to %s. {race=%s}", r.start_time.Format("15:04:05.000"), r.Race_code)
+		log.Printf("INFO practice race set start time {race=%s, start_time=%s}", r.Race_code, r.start_time.Format("15:04:05.000"))
 	} else if len(r.players) == 0 {
 		// wait for other players to join
 	} else if r.start_time == nil {
 		r.start_countdown(r.countdown_period)
-		log.Printf("INFO race set start time to %s. {race=%s}", r.start_time.Format("15:04:05.000"), r.Race_code)
+		log.Printf("INFO race set start time {race=%s, start_time=%s}", r.Race_code, r.start_time.Format("15:04:05.000"))
 	} else {
 		// do not allow any more player joins if there is
 		// not enough time
@@ -301,7 +301,7 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 	r.players[pp.conn] = pp
 	// TODO remove 2x Player_id
 	r.broadcast(notification_player_joined(player))
-	log.Printf("INFO player joined race. {player=%d, race=%s}", player.Player_id, r.Race_code)
+	log.Printf("INFO player joined race {player=%d, race=%s}", player.Player_id, r.Race_code)
 
 	return conn, nil
 }
