@@ -7,11 +7,11 @@ clean() {
 
 echo 1. sass compile
 clean "css"
-sass --scss sass/race.scss > css/style.css
+sass --scss ./frontend/sass/race.scss > css/style.css
 
 echo 2. typescript compile
 clean "js"
-tsc ./ts/race.ts --outFile js/race.js
+tsc ./frontend/typescript/race.ts --outFile js/race.js
 
 echo 3. go get
 go get

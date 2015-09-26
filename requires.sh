@@ -4,8 +4,12 @@
 
 apt-get install npm golang ruby
 
-npm install -g typescript
-gem install sass
-
 # http://stackoverflow.com/questions/26320901/cannot-install-nodejs-usr-bin-env-node-no-such-file-or-directory
 ln -s /usr/bin/nodejs /usr/bin/node
+
+npm install -g typescript
+npm install -g gulp
+npm install --save-dev gulp
+npm install --save-dev gulp-util
+
+gem install sass
