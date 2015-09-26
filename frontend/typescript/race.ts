@@ -12,6 +12,7 @@ window.onload = function () {
         len: 0,
         players: {}
     };
+
     var statusBox = $("#status");
 
     var done = $("#done");

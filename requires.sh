@@ -13,5 +13,7 @@ npm install -g gulp
 npm install --save-dev gulp
 npm install --save-dev gulp-util
 npm install --save-dev gulp-sass
+npm install --save-dev gulp-typescript
+npm install --save-dev gulp-sourcemaps
 
 gem install sass

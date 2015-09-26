@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"html/template"
 	"log"
 	"math/rand"
@@ -32,6 +33,18 @@ type Config struct {
 	}
 }
 
+func parse_static_location(loc_string string) (string, string, error) {
+	sp := strings.Split(loc_string, "->")
+	if len(sp) != 2 {
+		return "", "", fmt.Errorf("correct format = {endpoint} -> {path}. Got: %s", loc_string)
+	}
+
+	from := strings.Trim(sp[0], " /")
+	dir := strings.Trim(sp[1], " ")
+
+	return from, dir, nil
+}
+
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	flag.Parse()
@@ -56,13 +69,16 @@ func main() {
 	r.Get("/zavod", lobby.Race_creator_handler)
 	r.Get("/", lobby.Lobby_handler)
 
-	// get all static directories fro config and create fileserver
-	// for each
+	// get all static directories from config and create fileserver
+	// for each one of them
 	for _, s := range cfg.Server.Static {
-		s = strings.Trim(s, "/")
-		fileserver := http.FileServer(http.Dir(s))
-		s = "/" + s + "/"
-		http.Handle(s, http.StripPrefix(s, fileserver))
+		from, dir, err := parse_static_location(s)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fileserver := http.FileServer(http.Dir(dir))
+		http.Handle("/"+from+"/", http.StripPrefix(s, fileserver))
 	}
 
 	http.Handle("/", r)
