@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"errors"
@@ -56,11 +56,11 @@ func set_auth_cookie(w http.ResponseWriter, player *Player) error {
 	return nil
 }
 
-func (l *Lobby) lobby_handler(w http.ResponseWriter, r *http.Request) {
+func (l *Lobby) Lobby_handler(w http.ResponseWriter, r *http.Request) {
 	templates.ExecuteTemplate(w, "index.html", nil)
 }
 
-func (l *Lobby) race_creator_handler(w http.ResponseWriter, r *http.Request) {
+func (l *Lobby) Race_creator_handler(w http.ResponseWriter, r *http.Request) {
 	race_type := r.URL.Query().Get("t")
 
 	var race *Race
@@ -81,7 +81,7 @@ func (l *Lobby) race_creator_handler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/zavod/"+race.Race_code, http.StatusFound)
 }
 
-func (l *Lobby) race_handler(w http.ResponseWriter, r *http.Request) {
+func (l *Lobby) Race_handler(w http.ResponseWriter, r *http.Request) {
 	race_code := r.URL.Query().Get(":race_code")
 	race, exists := l.races[race_code]
 	if !exists {
@@ -124,7 +124,7 @@ func (l *Lobby) race_handler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (l *Lobby) ws_handler(w http.ResponseWriter, r *http.Request) {
+func (l *Lobby) Ws_handler(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)

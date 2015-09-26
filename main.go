@@ -11,11 +11,12 @@ import (
 
 	"github.com/gorilla/pat"
 	gcfg "gopkg.in/gcfg.v1"
+
+	"teplydatel/server"
 )
 
 var addr = flag.String("addr", ":1338", "http server address")
 var config = flag.String("config", "config.ini", "config file")
-var templates *template.Template
 
 type Config struct {
 	Texts struct {
@@ -42,18 +43,18 @@ func main() {
 	}
 
 	addr := cfg.Server.Address
-	templates, err = template.ParseGlob(cfg.Server.Templates + "/*")
+	templates, err := template.ParseGlob(cfg.Server.Templates + "/*")
 	if err != nil {
 		log.Fatalf("can't load templates: %s", err)
 	}
 
-	lobby := NewLobby(cfg.Texts.File, cfg.Race.CountdownSeconds)
+	lobby := server.NewLobby(templates, cfg.Texts.File, cfg.Race.CountdownSeconds)
 
 	r := pat.New()
-	r.Get("/ws/{race_code}", lobby.ws_handler)
-	r.Get("/zavod/{race_code}", lobby.race_handler)
-	r.Get("/zavod", lobby.race_creator_handler)
-	r.Get("/", lobby.lobby_handler)
+	r.Get("/ws/{race_code}", lobby.Ws_handler)
+	r.Get("/zavod/{race_code}", lobby.Race_handler)
+	r.Get("/zavod", lobby.Race_creator_handler)
+	r.Get("/", lobby.Lobby_handler)
 
 	// get all static directories fro config and create fileserver
 	// for each

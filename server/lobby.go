@@ -1,7 +1,8 @@
-package main
+package server
 
 import (
 	"bufio"
+	"html/template"
 	"io"
 	"math/rand"
 	"os"
@@ -16,6 +17,10 @@ const (
 	anonymous_name = "anonym"
 )
 
+var (
+	templates *template.Template
+)
+
 type Lobby struct {
 	texts []*string
 
@@ -28,7 +33,9 @@ type Lobby struct {
 	races_lock   sync.Mutex
 }
 
-func NewLobby(texts_file string, countdown_seconds int) *Lobby {
+func NewLobby(tmpl *template.Template, texts_file string, countdown_seconds int) *Lobby {
+	templates = tmpl
+
 	f, err := os.Open(texts_file)
 	defer f.Close()
 	if err != nil {
