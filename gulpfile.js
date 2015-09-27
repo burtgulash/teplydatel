@@ -44,7 +44,7 @@ gulp.task("build-css", function() {
 });
 
 gulp.task("build-javascript", function() {
-    var tsResult = gulp.src(typescript_dir + "/*.ts")
+    var tsResult = gulp.src([typescript_dir + "/*.ts", typescript_dir + "/typings/*.d.ts"])
         .pipe(sourcemaps.init())
         .pipe(tsc({
             out: "race.js"
