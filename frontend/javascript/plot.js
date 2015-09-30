@@ -31,7 +31,7 @@ function Tick(done, wpm) {
 }
 
 Plot.prototype.add_player = function(player_id) {
-    this.progress[player_id] = [Tick(0, 0)];
+    this.progress[player_id] = [new Tick(0, 0)];
 };
 
 Plot.prototype.update_progress = function(player_id, done, wpm) {
@@ -43,9 +43,11 @@ Plot.prototype.update_progress = function(player_id, done, wpm) {
     }
 
     var last_tick = progress[progress.length - 1];
-    var current_tick = Tick(done, wpm);
+    var current_tick = new Tick(done, wpm);
     progress.push(current_tick);
     // TODO this.lineto(last_tick, current_tick)
+    //
+    console.log(progress);
 };
 
 Plot.prototype.redraw = function() {

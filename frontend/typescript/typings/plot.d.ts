@@ -1,1 +1,1 @@
-declare function Plot(container: string, width: number, height: number);
+declare function Plot(container: string, width: number, height: number): void;

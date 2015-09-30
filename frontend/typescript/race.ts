@@ -27,8 +27,7 @@ window.onload = function () {
     var after_cursor = remaining.text().split("");
     race.len = after_cursor.length;
 
-    var plot = Plot("#chart", 720, 120);
-    console.log(plot);
+    var plot = new Plot("#chart", 720, 120);
 
     function notifyProgress() {
         clearTimeout(notifyTimeout);
@@ -187,11 +186,17 @@ window.onload = function () {
                     wpm: 0
                 }
             };
+
+            plot.add_player(player_id);
         } else if (cmd == "r") {
             var progress = player.progress;
             progress.done = +args[0];
             progress.errors = +args[1];
             progress.wpm = +args[2];
+
+            plot.update_progress(player_id,
+                                 progress.done,
+                                 progress.wpm);
         } else if (cmd == "c") {
             statusBox.text(+args[0] + "s zbývá...");
         } else if (cmd == "f") {
