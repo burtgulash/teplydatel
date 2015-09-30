@@ -8,6 +8,7 @@ var gutil          = require("gulp-util"),
     sass           = require("gulp-sass"),
     sourcemaps     = require("gulp-sourcemaps"),
     tsc            = require("gulp-typescript"),
+    jshint         = require("gulp-jshint"),
     flatten        = require("gulp-flatten"),
     gulpFilter     = require("gulp-filter"),
     minifycss      = require("gulp-minify-css"),
@@ -16,6 +17,7 @@ var gutil          = require("gulp-util"),
 
 var scss_dir = "frontend/scss";
 var typescript_dir = "frontend/typescript";
+var javascript_dir = "frontend/javascript";
 
 var dist = "./public";
 
@@ -30,6 +32,12 @@ gulp.task("watch", function() {
 
 gulp.task("clean", function() {
     del([dist]);
+});
+
+gulp.task("lint", function() {
+    return gulp.src(javascript_dir + "/*.js")
+        .pipe(jshint())
+        .pipe(jshint.reporter("default"));
 });
 
 gulp.task("build-css", function() {

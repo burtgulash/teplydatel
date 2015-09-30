@@ -26,6 +26,7 @@ sudo npm install --save-dev gulp-sourcemaps
 sudo npm install --save-dev gulp-flatten
 sudo npm install --save-dev gulp-filter
 sudo npm install --save-dev gulp-minify-css
+sudo npm install --save-dev gulp-jshint
 
 echo install bower dependencies defined in bower.json
 bower install
