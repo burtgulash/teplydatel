@@ -26,7 +26,7 @@ gulp.task("default", ["watch"]);
 
 gulp.task("watch", function() {
     gulp.watch(scss_dir + "/**/*.scss", ["build-css"]);
-    gulp.watch(typescript_dir + "/**/*.ts", ["build-javascript"]);
+    gulp.watch(typescript_dir + "/**/*.ts", ["build-js"]);
 });
 
 
@@ -52,15 +52,22 @@ gulp.task("build-css", function() {
 });
 
 gulp.task("build-js", function() {
-    var tsResult = gulp.src([typescript_dir + "/*.ts", typescript_dir + "/typings/*.d.ts"])
-        .pipe(sourcemaps.init())
-        .pipe(tsc({
-            out: "race.js"
-        }));
+    var tsFilter = gulpFilter('*.ts', {restore: true});
 
-    return tsResult.js
-        .pipe(concat(javascript_dir + "/*.js"))
-        .pipe(gutil.env.type === "production" ? uglify() : gutil.noop())
+    return gulp.src([typescript_dir + "/*.ts",
+                     typescript_dir + "/typings/*.d.ts",
+                     javascript_dir + "/*.js"])
+        .pipe(sourcemaps.init())
+        .pipe(tsFilter)
+        .pipe(tsc({
+            out: "tmp.js"
+        }))
+        .pipe(tsFilter.restore)
+
+        .pipe(gutil.env.type === "production"
+            ? uglify()
+            : gutil.noop())
+        .pipe(concat("race.js"))
         .pipe(sourcemaps.write("."))
         .pipe(gulp.dest(dist + "/js"));
 });
@@ -81,18 +88,12 @@ gulp.task('publish-bower-components', function() {
         .pipe(sourcemaps.init())
         .pipe(uglify())
         .pipe(sourcemaps.write("."))
-        .pipe(rename({
-            suffix: ".min"
-        }))
         .pipe(gulp.dest(dist + '/js/'))
         .pipe(jsFilter.restore)
 
         // grab vendor css files from bower_components, minify and push in /public
         .pipe(cssFilter)
         .pipe(minifycss())
-        .pipe(rename({
-            suffix: ".min"
-        }))
         .pipe(gulp.dest(dist + '/css'))
         .pipe(cssFilter.restore)
 

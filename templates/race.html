@@ -4,7 +4,8 @@
         <meta charset="UTF-8">
         <link rel="stylesheet" type="text/css" href="/css/style.min.css">
         <!-- <script src="//code.jquery.com/jquery-1.11.3.min.js"></script> -->
-        <script type="text/javascript" src="/js/jquery.min.js"></script>
+        <script type="text/javascript" src="/js/jquery.js"></script>
+        <script type="text/javascript" src="/js/d3.js"></script>
         <script type="text/javascript" src="/js/race.js"></script>
     </head>
     <body>
@@ -16,7 +17,8 @@
             <h3>hráči</h3>
             <div>jsi hráč {{.Player.Player_id}}</div>
             <ul id="standings"></ul>
-            {{template "svg"}}
+            <h3>chart</h3>
+            <div id="chart"></div>
         </div>
         <h3>text</h3>
         <div class="fields" tabindex="1">
