@@ -20,6 +20,9 @@ function Plot(container, width, height) {
 
     this.y = d3.scale.linear()
                .range([this.height, 0]);
+
+    this.svg.append("text")
+        .text("TEST");
 }
 
 function Tick(done, wpm) {
@@ -34,7 +37,7 @@ Plot.prototype.add_player = function(player_id) {
 Plot.prototype.update_progress = function(player_id, done, wpm) {
     var progress = this.progress[player_id];
     if (!progress) {
-        console.log("player does not exist", 
+        console.log("player does not exist",
                     {player_id: player_id});
         return;
     }

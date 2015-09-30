@@ -1,4 +1,5 @@
 /// <reference path="typings/jquery.d.ts" />
+/// <reference path="typings/plot.d.ts" />
 
 
 window.onload = function () {

@@ -51,7 +51,7 @@ gulp.task("build-css", function() {
         .pipe(gulp.dest(dist + "/css"));
 });
 
-gulp.task("build-javascript", function() {
+gulp.task("build-js", function() {
     var tsResult = gulp.src([typescript_dir + "/*.ts", typescript_dir + "/typings/*.d.ts"])
         .pipe(sourcemaps.init())
         .pipe(tsc({
@@ -59,6 +59,7 @@ gulp.task("build-javascript", function() {
         }));
 
     return tsResult.js
+        .pipe(concat(javascript_dir + "/*.js"))
         .pipe(gutil.env.type === "production" ? uglify() : gutil.noop())
         .pipe(sourcemaps.write("."))
         .pipe(gulp.dest(dist + "/js"));

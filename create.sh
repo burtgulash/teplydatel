@@ -7,7 +7,7 @@ echo 2. gulp build-css
 gulp build-css
 
 echo 3. gulp build-javascript
-gulp build-javascript
+gulp build-js
 
 echo 4. gulp publish-bower-components
 gulp publish-bower-components
