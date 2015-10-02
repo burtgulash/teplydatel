@@ -186,6 +186,12 @@ func (r *Race) run() {
 			if msg.data[0] == 'p' {
 				r.handle_progress(pp, msg.data)
 
+			} else if msg.data == "start" {
+				if r.is_practice_race {
+					r.start_it <- true
+				} else {
+					log.Printf("non-pratice race attempted to be started as practice race {race=%s}", r.Race_code)
+				}
 			} else if msg.data == "disconnect" {
 				pp.conn.close()
 				delete(r.players, pp.conn)
@@ -294,9 +300,6 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 	}
 
 	if r.is_practice_race {
-		// TODO change countdown period for practice races
-		r.start_countdown(r.countdown_period)
-		log.Printf("INFO practice race set start time {race=%s, start_time=%s}", r.Race_code, r.start_time.Format("15:04:05.000"))
 	} else if len(r.players) == 0 {
 		// wait for other players to join
 	} else if r.start_time == nil {
@@ -322,9 +325,4 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 	log.Printf("INFO player joined race {player=%d, race=%s}", player.Player_id, r.Race_code)
 
 	return conn, nil
-}
-
-func (r *Race) join_practice_race(player *Player, ws *websocket.Conn) {
-	r.lock.Lock()
-	defer r.lock.Unlock()
 }
