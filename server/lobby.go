@@ -86,7 +86,7 @@ func (l *Lobby) create_race(practice bool) *Race {
 		}
 	}
 
-	race := NewRace(l, race_code, l.countdown_seconds, practice)
+	race := NewRace(l, race_code, l.countdown_seconds, PRACTICE)
 	text := *l.texts[rand.Intn(len(l.texts))]
 	race.Race_string = &text
 	race.race_text = []rune(text)

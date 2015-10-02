@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"time"
 )
 
 type icommand interface {
@@ -55,6 +56,7 @@ type DisconnectCommand struct {
 
 type StartCommand struct {
 	Command
+	Start_time time.Time `json:"at"`
 }
 
 type JSONUnion struct {

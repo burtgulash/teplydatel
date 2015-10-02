@@ -2,6 +2,8 @@ package server
 
 import "encoding/json"
 
+const ROOT_PLAYER_ID = 0
+
 type Message struct {
 	Type      string `json:"typ"`
 	Player_id int    `json:"plid"`
@@ -101,6 +103,24 @@ func msg_status(player_id int, status string) []byte {
 			player_id,
 		},
 		status,
+	})
+	return x
+}
+
+type RaceInfoMessage struct {
+	Message
+	Code      string `json:"code"`
+	Race_type string `json:"race_type"`
+}
+
+func msg_race_info(race_code string, race_type string) []byte {
+	x, _ := json.Marshal(RaceInfoMessage{
+		Message{
+			"info",
+			ROOT_PLAYER_ID,
+		},
+		race_code,
+		race_type,
 	})
 	return x
 }

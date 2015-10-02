@@ -9,7 +9,10 @@ window.onload = function () {
     var lastInput = Date.now();
 
     var race = {
+        code: null,
         status: "created",
+        race_type: null,
+        is_started: false,
         len: 0,
         players: {}
     };
@@ -56,13 +59,16 @@ window.onload = function () {
         var c = String.fromCharCode(event.which);
 
         if (c == expected && error_arr.length == 0) {
+            if (!race.is_started && race.race_type == "practice")
+                start_practice_race();
+
             after_cursor.shift();
             before_cursor.push(c);
 
             // Each 5 successful characters or when 'remaining'
             // buffer depleted, send progress report
             send_buf.push(c);
-            if (send_buf.length >= 5 || after_cursor.length == 0)
+            if (send_buf.length >= 3 || after_cursor.length == 0)
                 notifyProgress();
 
             done.text(before_cursor.join(""));
@@ -151,11 +157,24 @@ window.onload = function () {
         }
     }
 
-    function start_race() {
+    function allow_race() {
         $(".fields").focus();
         $(".fields").keypress(onkeypress).keydown(onkeydown);
         statusBox.text("Piš!");
+    }
+
+    function start_race() {
+        race.is_started = true;
+        console.log("RACE STARTED");
         notifyTimeout = setTimeout(notifyProgress, 3 * 1000);
+    }
+
+    function start_practice_race() {
+        start_race();
+        conn.send(JSON.stringify({
+            typ: "start",
+            at: (new Date()).toISOString()
+        }));
     }
 
     function onwsmessage(event) {
@@ -174,8 +193,16 @@ window.onload = function () {
 
         if (typ == "status") {
             race.status = data.status;
-            if (race.status == "live")
+            if (race.race_type != "practice" && race.status == "live") {
+                allow_race();
                 start_race();
+            }
+        } else if (typ == "info") {
+            race.code = data.code;
+            race.race_type = data.race_type;
+            if (race.race_type == "practice") {
+                allow_race();
+            }
         } else if (typ == "joined") {
             var color = data.color;
             console.log("joined color", color);

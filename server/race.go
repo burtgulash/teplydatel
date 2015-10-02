@@ -14,6 +14,10 @@ const (
 	CREATED = iota
 	LIVE
 	CLOSED
+
+	PUBLIC = iota
+	PRIVATE
+	PRACTICE
 )
 
 var (
@@ -22,6 +26,11 @@ var (
 		CREATED: "created",
 		LIVE:    "live",
 		CLOSED:  "closed",
+	}
+	race_type_map = map[int]string{
+		PUBLIC:   "public",
+		PRIVATE:  "private",
+		PRACTICE: "practice",
 	}
 )
 
@@ -61,9 +70,11 @@ func (pp *PlayerProgress) add_progress(at time.Time, num_ok, num_errs int) {
 	}
 
 	first := pp.history[0]
+	last := pp.history[len(pp.history)-1]
 	now := time.Now()
 
 	pp.currentWpm = wpm(pp.done, now.Sub(first.timestamp))
+	pp.lastWpm = wpm(num_ok, now.Sub(last.timestamp))
 
 	sum := 0.0
 	c := 0
@@ -102,7 +113,7 @@ type Race struct {
 	lobby            *Lobby
 	next_rank        int
 	countdown_period time.Duration
-	is_practice_race bool
+	race_type        int
 
 	players map[*connection]*PlayerProgress
 	lock    sync.Mutex
@@ -112,7 +123,7 @@ type Race struct {
 	start_it  chan bool
 }
 
-func NewRace(lobby *Lobby, race_code string, countdown_seconds int, practice bool) *Race {
+func NewRace(lobby *Lobby, race_code string, countdown_seconds int, race_type int) *Race {
 	return &Race{
 		lobby:            lobby,
 		Race_code:        race_code,
@@ -122,7 +133,7 @@ func NewRace(lobby *Lobby, race_code string, countdown_seconds int, practice boo
 		start_it:         make(chan bool, 1),
 		next_rank:        1,
 		countdown_period: time.Second * time.Duration(countdown_seconds),
-		is_practice_race: practice,
+		race_type:        race_type,
 	}
 }
 
@@ -186,8 +197,9 @@ func (r *Race) run() {
 			case *ProgressCommand:
 				r.handle_progress(pp, cmd.Done, cmd.Errors)
 			case *StartCommand:
-				if r.is_practice_race {
-					r.start_it <- true
+				if r.race_type == PRACTICE {
+					r.start_time = &cmd.Start_time
+					pp.start(cmd.Start_time)
 				} else {
 					log.Printf("non-pratice race attempted to be started as practice race {race=%s}", r.Race_code)
 				}
@@ -293,7 +305,7 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 		color:      color,
 	}
 
-	if r.is_practice_race {
+	if r.race_type == PRACTICE {
 	} else if len(r.players) == 0 {
 		// wait for other players to join
 	} else if r.start_time == nil {
@@ -308,6 +320,8 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 			return nil, errors.New("tried to join too late")
 		}
 	}
+
+	conn.send <- msg_race_info(r.Race_code, race_type_map[r.race_type])
 
 	// notify current user of all joined users
 	for _, pp := range r.players {
