@@ -27,7 +27,7 @@ window.onload = function () {
     var after_cursor = remaining.text().split("");
     race.len = after_cursor.length;
 
-    var plot = new Plot("#chart", 720, 120);
+    var plot = new Plot("#chart", 720, 160);
 
     function notifyProgress() {
         clearTimeout(notifyTimeout);

@@ -50,6 +50,7 @@ type PlayerProgress struct {
 	errors     int
 	history    []*progressItem
 	currentWpm float64
+	lastWpm    float64
 }
 
 func (pp *PlayerProgress) start(at time.Time) {
@@ -66,11 +67,29 @@ func (pp *PlayerProgress) add_progress(at time.Time, num_ok, num_errs int) {
 		panic("uninitialized history!")
 	}
 
+	first := pp.history[0]
+	now := time.Now()
+
+	pp.currentWpm = wpm(pp.done, now.Sub(first.timestamp))
+
+	sum := 0.0
+	c := 0
+	for i := len(pp.history) - 1; i > 0 && c < 7; i-- {
+		a, b := pp.history[i], pp.history[i-1]
+		x := wpm(a.num_ok, a.timestamp.Sub(b.timestamp))
+		sum += x
+		c++
+	}
+
+	if c > 0 {
+		log.Println(sum, c)
+		pp.lastWpm = sum / float64(c)
+	} else {
+		pp.lastWpm = 0
+	}
+
 	new_progress := &progressItem{at, num_ok, num_errs}
 	pp.history = append(pp.history, new_progress)
-
-	first := pp.history[0]
-	pp.currentWpm = wpm(pp.done, time.Now().Sub(first.timestamp))
 }
 
 func wpm(num_characters int, period time.Duration) float64 {
@@ -226,7 +245,7 @@ func (r *Race) progress(pp *PlayerProgress, num_errors int, msg []rune) {
 		// not matching, what do?
 	}
 
-	r.broadcast(fmt.Sprintf("r %d %d %d %.2f", pp.player.Player_id, pp.done, pp.errors, pp.currentWpm))
+	r.broadcast(fmt.Sprintf("r %d %d %d %.2f", pp.player.Player_id, pp.done, pp.errors, pp.lastWpm))
 }
 
 func (r *Race) handle_finished(pp *PlayerProgress) {
