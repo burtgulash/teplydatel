@@ -1,6 +1,7 @@
 package server
 
 import (
+	"log"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -15,12 +16,12 @@ const (
 
 type connection struct {
 	ws      *websocket.Conn
-	receive chan RaceMessage
+	receive chan icommand
 	send    chan []byte
 	alive   bool
 }
 
-func NewConnection(ws *websocket.Conn, player *Player, receive chan RaceMessage) *connection {
+func NewConnection(ws *websocket.Conn, player *Player, receive chan icommand) *connection {
 	return &connection{
 		// 8 is size of buffer - # of messages before it gets full
 		send:    make(chan []byte, 8),
@@ -42,7 +43,7 @@ func (conn *connection) close() {
 
 func (conn *connection) ws_reader() {
 	defer func() {
-		conn.receive <- RaceMessage{conn, "disconnect"}
+		conn.receive <- &DisconnectCommand{Command{conn}}
 		conn.ws.Close()
 	}()
 
@@ -59,7 +60,14 @@ func (conn *connection) ws_reader() {
 			break
 		}
 
-		conn.receive <- RaceMessage{conn, string(message[:])}
+		cmd_message, err := JSONDecode(message, conn)
+		if err != nil {
+			log.Printf("ERROR couldn't parse json message: %v", err)
+			break
+		}
+
+		cmd_message.set_conn(conn)
+		conn.receive <- cmd_message
 	}
 }
 

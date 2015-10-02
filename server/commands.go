@@ -1,106 +1,65 @@
 package server
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"errors"
+)
+
+type icommand interface {
+	get_conn() *connection
+	set_conn(conn *connection)
+}
 
 type Command struct {
-	Cmd       string `json:"cmd"`
-	Player_id int    `json:"plid"`
+	conn *connection
 }
 
-type JoinMessage struct {
+type JSONCommand struct {
+	Typ string `json:"typ"`
+}
+
+func (c *Command) get_conn() *connection {
+	return c.conn
+}
+
+func (c *Command) set_conn(conn *connection) {
+	c.conn = conn
+}
+
+func JSONDecode(data []byte, conn *connection) (icommand, error) {
+	var x JSONUnion
+	err := json.Unmarshal(data, &x)
+	if err != nil {
+		return nil, err
+	}
+
+	switch x.Typ {
+	case "progress":
+		return &x.ProgressCommand, nil
+	case "start":
+		return &x.StartCommand, nil
+	}
+
+	return nil, errors.New("couldn't parse command " + string(data))
+}
+
+type ProgressCommand struct {
 	Command
-	Color string `json:"color"`
+	Done   string `json:"done"`
+	Errors int    `json:"errors"`
 }
 
-func cmd_player_joined(player_id int, color string) []byte {
-	x, _ := json.Marshal(JoinMessage{
-		Command{
-			"joined",
-			player_id,
-		},
-		color,
-	})
-	return x
-}
-
-type FinishedMessage struct {
-	Command
-	Rank int `json:"rank"`
-}
-
-func cmd_player_finished(player_id, rank int) []byte {
-	x, _ := json.Marshal(FinishedMessage{
-		Command{
-			"finished",
-			player_id,
-		},
-		rank,
-	})
-	return x
-}
-
-type ProgressMessage struct {
-	Command
-	Done   int     `json:"done"`
-	Errors int     `json:"errors"`
-	Wpm    float64 `json:"wpm"`
-}
-
-func cmd_progress(player_id, done, errors int, wpm float64) []byte {
-	x, _ := json.Marshal(ProgressMessage{
-		Command{
-			"progress",
-			player_id,
-		},
-		done,
-		errors,
-		RoundN(wpm, 2),
-	})
-	return x
-}
-
-type DisconnectedMessage struct {
+type DisconnectCommand struct {
 	Command
 }
 
-func cmd_disconnected(player_id int) []byte {
-	x, _ := json.Marshal(DisconnectedMessage{
-		Command{
-			"disconnected",
-			player_id,
-		},
-	})
-	return x
-}
-
-type CountdownMessage struct {
+type StartCommand struct {
 	Command
-	Remains int `json:"remains"`
 }
 
-func cmd_countdown(player_id, remains int) []byte {
-	x, _ := json.Marshal(CountdownMessage{
-		Command{
-			"countdown",
-			player_id,
-		},
-		remains,
-	})
-	return x
-}
-
-type StatusMessage struct {
-	Command
-	Status string `json:"status"`
-}
-
-func cmd_status(player_id int, status string) []byte {
-	x, _ := json.Marshal(StatusMessage{
-		Command{
-			"status",
-			player_id,
-		},
-		status,
-	})
-	return x
+type JSONUnion struct {
+	JSONCommand
+	ProgressCommand
+	DisconnectCommand
+	StartCommand
 }

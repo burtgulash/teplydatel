@@ -32,8 +32,12 @@ window.onload = function () {
     function notifyProgress() {
         clearTimeout(notifyTimeout);
 
-        conn.send("p " + error_counter +
-                " " + send_buf.join(""));
+        conn.send(JSON.stringify({
+            typ: "progress",
+            done: send_buf.join(""),
+            errors: error_counter
+        }));
+
         send_buf = [];
         error_counter = 0;
 
@@ -156,7 +160,7 @@ window.onload = function () {
 
     function onwsmessage(event) {
         var data = JSON.parse(event.data);
-        var cmd = data.cmd;
+        var typ = data.typ;
         var player_id = data.plid;
         var player;
 
@@ -168,11 +172,11 @@ window.onload = function () {
             console.log("Player", player_id, "not found!");
         }
 
-        if (cmd == "status") {
+        if (typ == "status") {
             race.status = data.status;
             if (race.status == "live")
                 start_race();
-        } else if (cmd == "joined") {
+        } else if (typ == "joined") {
             var color = data.color;
             console.log("joined color", color);
 
@@ -191,7 +195,7 @@ window.onload = function () {
             };
 
             plot.add_player(player_id, color);
-        } else if (cmd == "progress") {
+        } else if (typ == "progress") {
             var progress = player.progress;
             progress.done = +data.done;
             progress.errors = +data.errors;
@@ -203,15 +207,15 @@ window.onload = function () {
             plot.update_progress(player_id,
                                  done_percent,
                                  progress.wpm);
-        } else if (cmd == "countdown") {
+        } else if (typ == "countdown") {
             statusBox.text(+data.remains + "s zbývá...");
-        } else if (cmd == "finished") {
+        } else if (typ == "finished") {
             player.finished = true;
             player.rank = +data.rank;
-        } else if (cmd == "disconnected") {
+        } else if (typ == "disconnected") {
             player.connected = false;
         } else {
-            console.log("unknown command", cmd);
+            console.log("unknown command", typ);
         }
 
         updateStandings();

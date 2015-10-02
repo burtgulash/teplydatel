@@ -4,7 +4,6 @@ import (
 	"errors"
 	"log"
 	"regexp"
-	"strconv"
 	"sync"
 	"time"
 
@@ -25,11 +24,6 @@ var (
 		CLOSED:  "closed",
 	}
 )
-
-type RaceMessage struct {
-	conn *connection
-	data string
-}
 
 type progressItem struct {
 	timestamp time.Time
@@ -113,7 +107,7 @@ type Race struct {
 	players map[*connection]*PlayerProgress
 	lock    sync.Mutex
 
-	receive   chan RaceMessage
+	receive   chan icommand
 	countdown chan int
 	start_it  chan bool
 }
@@ -123,7 +117,7 @@ func NewRace(lobby *Lobby, race_code string, countdown_seconds int, practice boo
 		lobby:            lobby,
 		Race_code:        race_code,
 		players:          make(map[*connection]*PlayerProgress),
-		receive:          make(chan RaceMessage, 16),
+		receive:          make(chan icommand, 16),
 		countdown:        make(chan int),
 		start_it:         make(chan bool, 1),
 		next_rank:        1,
@@ -138,7 +132,7 @@ func (r *Race) set_status(status int) {
 
 	r.status = status
 
-	r.broadcast(cmd_status(0, new_status))
+	r.broadcast(msg_status(0, new_status))
 	log.Printf("INFO race changed status {race=%s, from=%s, to=%s}", r.Race_code, old_status, new_status)
 }
 
@@ -176,28 +170,33 @@ func (r *Race) run() {
 
 		case remains := <-r.countdown:
 			r.lock.Lock()
-			r.broadcast(cmd_countdown(0, remains))
+			r.broadcast(msg_countdown(0, remains))
 			r.lock.Unlock()
 
-		case msg := <-r.receive:
+		case cmd := <-r.receive:
 			r.lock.Lock()
-			pp := r.players[msg.conn]
+			pp, ok := r.players[cmd.get_conn()]
+			if !ok {
+				log.Println("ERROR player progress not found {conn=%v}", cmd.get_conn())
+				r.lock.Unlock()
+				break
+			}
 
-			if msg.data[0] == 'p' {
-				r.handle_progress(pp, msg.data)
-
-			} else if msg.data == "start" {
+			switch cmd := cmd.(type) {
+			case *ProgressCommand:
+				r.handle_progress(pp, cmd.Done, cmd.Errors)
+			case *StartCommand:
 				if r.is_practice_race {
 					r.start_it <- true
 				} else {
 					log.Printf("non-pratice race attempted to be started as practice race {race=%s}", r.Race_code)
 				}
-			} else if msg.data == "disconnect" {
+			case *DisconnectCommand:
 				pp.conn.close()
 				delete(r.players, pp.conn)
 
 				log.Printf("INFO player left race {player=%d, race=%s}", pp.player.Player_id, r.Race_code)
-				r.broadcast(cmd_disconnected(pp.player.Player_id))
+				r.broadcast(msg_disconnected(pp.player.Player_id))
 
 				if len(r.players) == 0 {
 					r.set_status(CLOSED)
@@ -216,19 +215,14 @@ func (r *Race) broadcast(message []byte) {
 	}
 }
 
-func (r *Race) handle_progress(pp *PlayerProgress, msg string) {
+func (r *Race) handle_progress(pp *PlayerProgress, done string, num_errors int) {
 	if pp.finished {
 		log.Printf("WARNING player already finished, but progress received {player=%d, race=%s}", pp.player.Player_id, r.Race_code)
 		return
 	}
-	m := progress_rx.FindStringSubmatch(msg[2:])
 
-	num_errors, err := strconv.Atoi(m[1])
-	if err != nil {
-		return
-	}
-
-	r.progress(pp, num_errors, []rune(m[2]))
+	m := []rune(done[:])
+	r.progress(pp, num_errors, m)
 
 	if pp.done == len(r.race_text) {
 		if !pp.finished {
@@ -250,12 +244,12 @@ func (r *Race) progress(pp *PlayerProgress, num_errors int, msg []rune) {
 		// not matching, what do?
 	}
 
-	r.broadcast(cmd_progress(pp.player.Player_id, pp.done, pp.errors, pp.lastWpm))
+	r.broadcast(msg_progress(pp.player.Player_id, pp.done, pp.errors, pp.lastWpm))
 }
 
 func (r *Race) handle_finished(pp *PlayerProgress) {
 	pp.rank = r.next_rank
-	r.broadcast(cmd_player_finished(pp.player.Player_id, pp.rank))
+	r.broadcast(msg_player_finished(pp.player.Player_id, pp.rank))
 	r.next_rank++
 }
 
@@ -317,11 +311,11 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 
 	// notify current user of all joined users
 	for _, pp := range r.players {
-		conn.send <- cmd_player_joined(pp.player.Player_id, pp.color)
+		conn.send <- msg_player_joined(pp.player.Player_id, pp.color)
 	}
 
 	r.players[pp.conn] = pp
-	r.broadcast(cmd_player_joined(pp.player.Player_id, pp.color))
+	r.broadcast(msg_player_joined(pp.player.Player_id, pp.color))
 	log.Printf("INFO player joined race {player=%d, race=%s}", player.Player_id, r.Race_code)
 
 	return conn, nil
