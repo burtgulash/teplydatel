@@ -44,6 +44,7 @@ type PlayerProgress struct {
 	race     *Race
 	rank     int
 	finished bool
+	color    string
 
 	done       int
 	errors     int
@@ -234,8 +235,8 @@ func (r *Race) handle_finished(pp *PlayerProgress) {
 	r.next_rank++
 }
 
-func notification_player_joined(player *Player) string {
-	return fmt.Sprintf("j %d %d", player.Player_id, player.Player_id)
+func notification_player_joined(pp *PlayerProgress) string {
+	return fmt.Sprintf("j %d %s", pp.player.Player_id, pp.color)
 }
 
 func (r *Race) start_countdown(countdown_period time.Duration) {
@@ -264,6 +265,9 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
+	num_players := len(r.players)
+	color := player_color_palette[num_players%len(player_color_palette)]
+
 	conn := NewConnection(ws, player, r.receive)
 	pp := &PlayerProgress{
 		conn:       conn,
@@ -272,6 +276,7 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 		done:       0,
 		history:    nil,
 		currentWpm: 0.0,
+		color:      color,
 	}
 
 	if r.is_practice_race {
@@ -295,12 +300,12 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 
 	// notify current user of all joined users
 	for _, pp := range r.players {
-		conn.send <- notification_player_joined(pp.player)
+		conn.send <- notification_player_joined(pp)
 	}
 
 	r.players[pp.conn] = pp
 	// TODO remove 2x Player_id
-	r.broadcast(notification_player_joined(player))
+	r.broadcast(notification_player_joined(pp))
 	log.Printf("INFO player joined race {player=%d, race=%s}", player.Player_id, r.Race_code)
 
 	return conn, nil

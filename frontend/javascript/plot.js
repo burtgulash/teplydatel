@@ -11,7 +11,7 @@ function Plot(container, width, height) {
         right: 10
     };
 
-    this.progress = {};
+    this.players = {};
 
     var max_wpm_estimate = 120;
 
@@ -34,32 +34,34 @@ function Plot(container, width, height) {
 
     this.update = function(data) {
         var lines = svg.selectAll(".line")
-            .attr("d", lineFunction)
+            .attr("d", function(d) { return lineFunction(d.progress); })
             .data(data);
 
         lines.enter().append("path")
             .attr("class", "line")
-            .attr("d", lineFunction)
-            .attr("stroke", "blue")
+            .attr("d", function(d) { return lineFunction(d.progress); })
+            .attr("stroke", function(d) { return d.color; })
             .attr("stroke-width", 4)
             .attr("fill", "none");
     };
 
-    this.add_player = function(player_id) {
-        console.log("adding player", player_id);
-        this.progress[player_id] = [new Tick(0, 0)];
+    this.add_player = function(player_id, color) {
+        console.log("adding player", player_id, color);
+        this.players[player_id] = {
+            color: color,
+            progress: [new Tick(0, 0)]
+        };
     };
 
     this.update_progress = function(player_id, done, wpm) {
-        var progress = this.progress[player_id];
-        if (!progress) {
+        var player = this.players[player_id];
+        if (!player) {
             console.log("player does not exist",
                         {player_id: player_id});
             return;
         }
 
-        progress.push(new Tick(done, wpm));
-
-        this.update(d3.values(this.progress));
+        player.progress.push(new Tick(done, wpm));
+        this.update(d3.values(this.players));
     };
 }

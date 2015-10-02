@@ -174,9 +174,13 @@ window.onload = function () {
             if (race.status == "live")
                 start_race();
         } else if (cmd == "j") {
+            var color = args[0];
+            console.log("joined color", color);
+
             race.players[player_id] = {
                 id: player_id,
-                name: args[0],
+                name: player_id,
+                color: color,
                 connected: true,
                 finished: false,
                 rank: null,
@@ -187,7 +191,7 @@ window.onload = function () {
                 }
             };
 
-            plot.add_player(player_id);
+            plot.add_player(player_id, color);
         } else if (cmd == "r") {
             var progress = player.progress;
             progress.done = +args[0];
@@ -213,7 +217,7 @@ window.onload = function () {
 
         updateStandings();
         // DEBUG
-        //console.log("message received: ", event.data);
+        // console.log("message received: ", event.data);
     }
 
     if (window["WebSocket"]) {
