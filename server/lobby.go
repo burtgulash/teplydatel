@@ -47,6 +47,7 @@ func NewLobby(tmpl *template.Template, texts_file string, countdown_seconds int)
 		races:             make(map[string]*Race),
 		texts:             make([]*string, 0),
 		countdown_seconds: countdown_seconds,
+		player_counter:    1, // important. 0 = admin, root, global player id
 	}
 
 	reader := bufio.NewReader(f)

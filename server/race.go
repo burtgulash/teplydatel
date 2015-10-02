@@ -2,7 +2,6 @@ package server
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"regexp"
 	"strconv"
@@ -139,7 +138,7 @@ func (r *Race) set_status(status int) {
 
 	r.status = status
 
-	r.broadcast(fmt.Sprintf("s glob %s", new_status))
+	r.broadcast(cmd_status(0, new_status))
 	log.Printf("INFO race changed status {race=%s, from=%s, to=%s}", r.Race_code, old_status, new_status)
 }
 
@@ -177,7 +176,7 @@ func (r *Race) run() {
 
 		case remains := <-r.countdown:
 			r.lock.Lock()
-			r.broadcast(fmt.Sprintf("c glob %d", remains))
+			r.broadcast(cmd_countdown(0, remains))
 			r.lock.Unlock()
 
 		case msg := <-r.receive:
@@ -192,7 +191,7 @@ func (r *Race) run() {
 				delete(r.players, pp.conn)
 
 				log.Printf("INFO player left race {player=%d, race=%s}", pp.player.Player_id, r.Race_code)
-				r.broadcast(fmt.Sprintf("d %d", pp.player.Player_id))
+				r.broadcast(cmd_disconnected(pp.player.Player_id))
 
 				if len(r.players) == 0 {
 					r.set_status(CLOSED)
@@ -204,8 +203,8 @@ func (r *Race) run() {
 	}
 }
 
-func (r *Race) broadcast(message string) {
-	log.Println("DEBUG broadcasting: " + message)
+func (r *Race) broadcast(message []byte) {
+	log.Println("DEBUG broadcasting: " + string(message))
 	for conn := range r.players {
 		conn.send <- message
 	}
@@ -245,17 +244,13 @@ func (r *Race) progress(pp *PlayerProgress, num_errors int, msg []rune) {
 		// not matching, what do?
 	}
 
-	r.broadcast(fmt.Sprintf("r %d %d %d %.2f", pp.player.Player_id, pp.done, pp.errors, pp.lastWpm))
+	r.broadcast(cmd_progress(pp.player.Player_id, pp.done, pp.errors, pp.lastWpm))
 }
 
 func (r *Race) handle_finished(pp *PlayerProgress) {
 	pp.rank = r.next_rank
-	r.broadcast(fmt.Sprintf("f %d %d", pp.player.Player_id, pp.rank))
+	r.broadcast(cmd_player_finished(pp.player.Player_id, pp.rank))
 	r.next_rank++
-}
-
-func notification_player_joined(pp *PlayerProgress) string {
-	return fmt.Sprintf("j %d %s", pp.player.Player_id, pp.color)
 }
 
 func (r *Race) start_countdown(countdown_period time.Duration) {
@@ -319,12 +314,11 @@ func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 
 	// notify current user of all joined users
 	for _, pp := range r.players {
-		conn.send <- notification_player_joined(pp)
+		conn.send <- cmd_player_joined(pp.player.Player_id, pp.color)
 	}
 
 	r.players[pp.conn] = pp
-	// TODO remove 2x Player_id
-	r.broadcast(notification_player_joined(pp))
+	r.broadcast(cmd_player_joined(pp.player.Player_id, pp.color))
 	log.Printf("INFO player joined race {player=%d, race=%s}", player.Player_id, r.Race_code)
 
 	return conn, nil
