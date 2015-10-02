@@ -25,8 +25,11 @@ var dist = "./public";
 gulp.task("default", ["watch"]);
 
 gulp.task("watch", function() {
-    gulp.watch(scss_dir + "/**/*.scss", ["build-css"]);
-    gulp.watch(typescript_dir + "/**/*.ts", ["build-js"]);
+    gulp.watch(scss_dir + "/**/*.scss", 
+                    ["build-css"]);
+    gulp.watch([typescript_dir + "/**/*.ts",
+                javascript_dir + "/**/*.js"],
+                    ["build-js"]);
 });
 
 

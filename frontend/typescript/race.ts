@@ -194,8 +194,11 @@ window.onload = function () {
             progress.errors = +args[1];
             progress.wpm = +args[2];
 
+            var done_percent = progress.done * 100 / race.len;
+            console.log("Done percent", done_percent);
+
             plot.update_progress(player_id,
-                                 progress.done,
+                                 done_percent,
                                  progress.wpm);
         } else if (cmd == "c") {
             statusBox.text(+args[0] + "s zbývá...");

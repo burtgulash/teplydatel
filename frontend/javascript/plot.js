@@ -1,5 +1,10 @@
+function Tick(done, wpm) {
+    this.done = done;
+    this.wpm = wpm;
+}
+
 function Plot(container, width, height) {
-    this.margin = {
+    var margin = {
         top: 20,
         bottom: 20,
         left: 10,
@@ -8,48 +13,53 @@ function Plot(container, width, height) {
 
     this.progress = {};
 
-    this.width = width - this.margin.left - this.margin.right;
-    this.height = height - this.margin.top - this.margin.bottom;
+    var max_wpm_estimate = 120;
 
-    this.svg = d3.select(container).append("svg")
-                 .attr("width", width)
-                 .attr("height", height);
+    var svg = d3.select(container).append("svg")
+                .attr("width", width)
+                .attr("height", height);
 
-    this.x = d3.scale.linear()
-               .range([0, this.width]);
+    var x = d3.scale.linear()
+            .domain([0, 100])
+            .range([margin.left, width - margin.right]),
+        y = d3.scale.linear()
+            .domain([0, max_wpm_estimate])
+            .range([height - margin.top, margin.bottom]);
 
-    this.y = d3.scale.linear()
-               .range([this.height, 0]);
+    var lineFunction = d3.svg.line()
+        .x(function(d) { return x(d.done); })
+        .y(function(d) { return y(d.wpm); })
+        .interpolate("linear");
 
-    this.svg.append("text")
-        .text("TEST");
+
+    this.update = function(data) {
+        var lines = svg.selectAll(".line")
+            .attr("d", lineFunction)
+            .data(data);
+
+        lines.enter().append("path")
+            .attr("class", "line")
+            .attr("d", lineFunction)
+            .attr("stroke", "blue")
+            .attr("stroke-width", 4)
+            .attr("fill", "none");
+    };
+
+    this.add_player = function(player_id) {
+        console.log("adding player", player_id);
+        this.progress[player_id] = [new Tick(0, 0)];
+    };
+
+    this.update_progress = function(player_id, done, wpm) {
+        var progress = this.progress[player_id];
+        if (!progress) {
+            console.log("player does not exist",
+                        {player_id: player_id});
+            return;
+        }
+
+        progress.push(new Tick(done, wpm));
+
+        this.update(d3.values(this.progress));
+    };
 }
-
-function Tick(done, wpm) {
-    this.done = done;
-    this.wpm = wpm;
-}
-
-Plot.prototype.add_player = function(player_id) {
-    this.progress[player_id] = [new Tick(0, 0)];
-};
-
-Plot.prototype.update_progress = function(player_id, done, wpm) {
-    var progress = this.progress[player_id];
-    if (!progress) {
-        console.log("player does not exist",
-                    {player_id: player_id});
-        return;
-    }
-
-    var last_tick = progress[progress.length - 1];
-    var current_tick = new Tick(done, wpm);
-    progress.push(current_tick);
-    // TODO this.lineto(last_tick, current_tick)
-    //
-    console.log(progress);
-};
-
-Plot.prototype.redraw = function() {
-// update_progress for all players? and progresses recorded fo each player
-};
