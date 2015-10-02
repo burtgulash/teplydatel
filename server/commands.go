@@ -54,7 +54,7 @@ func cmd_progress(player_id, done, errors int, wpm float64) []byte {
 		},
 		done,
 		errors,
-		wpm,
+		RoundN(wpm, 2),
 	})
 	return x
 }

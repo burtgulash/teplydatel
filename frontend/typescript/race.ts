@@ -155,12 +155,12 @@ window.onload = function () {
     }
 
     function onwsmessage(event) {
-        var data = event.data.split(" ");
-        var cmd = data[0];
-        var player_id = data[1];
+        var data = JSON.parse(event.data);
+        var cmd = data.cmd;
+        var player_id = data.plid;
         var player;
 
-        if (player_id == "glob") {
+        if (player_id == 0) {
             player = null;
         } else if (player_id in race.players) {
             player = race.players[player_id];
@@ -168,13 +168,12 @@ window.onload = function () {
             console.log("Player", player_id, "not found!");
         }
 
-        var args = data.slice(2);
-        if (cmd == "s") {
-            race.status = args[0];
+        if (cmd == "status") {
+            race.status = data.status;
             if (race.status == "live")
                 start_race();
-        } else if (cmd == "j") {
-            var color = args[0];
+        } else if (cmd == "joined") {
+            var color = data.color;
             console.log("joined color", color);
 
             race.players[player_id] = {
@@ -192,11 +191,11 @@ window.onload = function () {
             };
 
             plot.add_player(player_id, color);
-        } else if (cmd == "r") {
+        } else if (cmd == "progress") {
             var progress = player.progress;
-            progress.done = +args[0];
-            progress.errors = +args[1];
-            progress.wpm = +args[2];
+            progress.done = +data.done;
+            progress.errors = +data.errors;
+            progress.wpm = +data.wpm;
 
             var done_percent = progress.done * 100 / race.len;
             console.log("Done percent", done_percent);
@@ -204,12 +203,12 @@ window.onload = function () {
             plot.update_progress(player_id,
                                  done_percent,
                                  progress.wpm);
-        } else if (cmd == "c") {
-            statusBox.text(+args[0] + "s zbývá...");
-        } else if (cmd == "f") {
+        } else if (cmd == "countdown") {
+            statusBox.text(+data.remains + "s zbývá...");
+        } else if (cmd == "finished") {
             player.finished = true;
-            player.rank = +args[0];
-        } else if (cmd == "d") {
+            player.rank = +data.rank;
+        } else if (cmd == "disconnected") {
             player.connected = false;
         } else {
             console.log("unknown command", cmd);
@@ -217,7 +216,7 @@ window.onload = function () {
 
         updateStandings();
         // DEBUG
-        // console.log("message received: ", event.data);
+        console.log("message received: ", event.data);
     }
 
     if (window["WebSocket"]) {
