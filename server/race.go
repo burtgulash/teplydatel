@@ -78,7 +78,7 @@ func (pp *PlayerProgress) add_progress(at time.Time, num_ok, num_errs int) {
 
 	sum := 0.0
 	c := 0
-	for i := len(pp.history) - 1; i > 0 && c < 7; i-- {
+	for i := len(pp.history) - 1; i > 0 && c < 4; i-- {
 		a, b := pp.history[i], pp.history[i-1]
 		x := wpm(a.num_ok, a.timestamp.Sub(b.timestamp))
 		sum += x

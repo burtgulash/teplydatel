@@ -14,11 +14,17 @@ body {
 #main-menu {
     text-align: center;
 
-    ul#menu {
-        list-style-type: none;  
+    #menu {
+        margin-top: 70px;
+        ul {
+            list-style-type: none;  
+            padding: 0;
+            margin: 0;
 
-        li {
-            font-size: 1.25em;
+            li {
+                font-size: 1.25em;
+                padding: 5px;
+            }
         }
     }
 }
