@@ -123,7 +123,11 @@ type Race struct {
 	start_it  chan bool
 }
 
-func NewRace(lobby *Lobby, race_code string, countdown_seconds int, race_type int) *Race {
+func NewRace(lobby *Lobby, race_code string, countdown_seconds int, is_practice bool) *Race {
+	race_type := PUBLIC
+	if is_practice {
+		race_type = PRACTICE
+	}
 	return &Race{
 		lobby:            lobby,
 		Race_code:        race_code,
@@ -290,6 +294,12 @@ func (r *Race) start_countdown(countdown_period time.Duration) {
 func (r *Race) join(player *Player, ws *websocket.Conn) (*connection, error) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
+
+	for _, pp := range r.players {
+		if pp.player == player {
+			return nil, errors.New("player already joined this race")
+		}
+	}
 
 	num_players := len(r.players)
 	color := player_color_palette[num_players%len(player_color_palette)]

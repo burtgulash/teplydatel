@@ -194,6 +194,7 @@ window.onload = function () {
         if (typ == "status") {
             race.status = data.status;
             if (race.race_type != "practice" && race.status == "live") {
+                console.log("allowing race");
                 allow_race();
                 start_race();
             }
