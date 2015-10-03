@@ -8,3 +8,17 @@ body {
     margin: 0 auto;
     padding: 5px;
 }
+
+
+
+#main-menu {
+    text-align: center;
+
+    ul#menu {
+        list-style-type: none;  
+
+        li {
+            font-size: 1.25em;
+        }
+    }
+}
