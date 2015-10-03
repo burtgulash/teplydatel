@@ -13,7 +13,7 @@ Hra má 3 herní módy:
 
 
 ## Poznámky
-Projekt vzniknul jako ve volné chvíli během pár víkendů a další vývoj
+Projekt vzniknul ve volných chvílích během několika víkendů a další vývoj
 momentálně není v plánu.  Nejsou podporovány starší prohlížeče především kvůli
 použítí websocketů.
 
