@@ -3,7 +3,7 @@
 Rychlopsaní s teplým datlem je webová hra, ve které se soutěží v rychlopsaní na
 českých úryvcích textu nebo filmových hláškách.
 
-url: [http://teplydatel.cz](http://teplydatel.cz)
+url: [**http://teplydatel.cz**](http://teplydatel.cz)
 
 ## Instrukce
 Hra má 3 herní módy:
