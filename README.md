@@ -11,6 +11,7 @@ Hra má 3 herní módy:
 * **soukromý závod**: vytvoří závod, jehož url lze zkopírovat a poslat dalším hráčům
 * **trénink**: nečeká se na příchozí hráče, hra pro jednoho hráče
 
+
 ## Poznámky
 Projekt vzniknul jako ve volné chvíli během pár víkendů a další vývoj
 momentálně není v plánu.  Nejsou podporovány starší prohlížeče především kvůli
@@ -18,3 +19,9 @@ použítí websocketů.
 
 * server v [Go](https://golang.org/)
 * klient v [Typescriptu](http://www.typescriptlang.org/) a Javascriptu + [jQuery](https://jquery.com/) + [d3.js](http://d3js.org/)
+
+## Ukázka
+
+<p align="center">
+  <img width="70%" src="./res/screen.png" alt="ingame screenshot" />
+</p>
