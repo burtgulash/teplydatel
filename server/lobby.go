@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"html/template"
 	"io"
+	"log"
 	"math/rand"
 	"os"
 	"strings"
@@ -95,6 +96,14 @@ func (l *Lobby) create_race(practice bool) *Race {
 	go race.run()
 
 	return race
+}
+
+func (l *Lobby) delete_race(race_code string) {
+	l.races_lock.Lock()
+	defer l.races_lock.Unlock()
+
+	delete(l.races, race_code)
+	log.Printf("INFO deleting race {race=%s, races_active=%d}", race_code, len(l.races))
 }
 
 func (l *Lobby) find_match_to_join() *Race {

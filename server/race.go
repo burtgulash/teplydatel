@@ -216,6 +216,7 @@ func (r *Race) run() {
 
 				if len(r.players) == 0 {
 					r.set_status(CLOSED)
+					r.lobby.delete_race(r.Race_code)
 				}
 			}
 			r.lock.Unlock()
